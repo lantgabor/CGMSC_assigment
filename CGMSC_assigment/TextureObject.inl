@@ -2,8 +2,8 @@
 #include <GL/gl.h>
 #include "TextureObject.h"
 
-#include <SDL.h>
-#include <SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 template<TextureType type>
 inline TextureObject<type>::TextureObject()
@@ -79,14 +79,14 @@ inline void TextureObject<type>::AttachFromFile(const std::string& filename, boo
 
 	glBindTexture(static_cast<GLenum>(type), m_id);
 	glTexImage2D(
-		static_cast<GLenum>(type),		// melyik binding point-on van a textúra erõforrás, amihez tárolást rendelünk
-		0,								// melyik részletességi szint adatait határozzuk meg
-		GL_RGB,							// textúra belsõ tárolási formátuma (GPU-n)
-		loaded_img->w, loaded_img->h,	// szélesség, magasság
+		static_cast<GLenum>(type),		// melyik binding point-on van a textï¿½ra erï¿½forrï¿½s, amihez tï¿½rolï¿½st rendelï¿½nk
+		0,								// melyik rï¿½szletessï¿½gi szint adatait hatï¿½rozzuk meg
+		GL_RGB,							// textï¿½ra belsï¿½ tï¿½rolï¿½si formï¿½tuma (GPU-n)
+		loaded_img->w, loaded_img->h,	// szï¿½lessï¿½g, magassï¿½g
 		0,								// nulla kell, hogy legyen ( https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml )
-		img_mode,						// forrás (=CPU-n) formátuma
-		GL_UNSIGNED_BYTE,				// forrás egy pixelének egy csatornáját hogyan tároljuk
-		loaded_img->pixels);			// forráshoz pointer
+		img_mode,						// forrï¿½s (=CPU-n) formï¿½tuma
+		GL_UNSIGNED_BYTE,				// forrï¿½s egy pixelï¿½nek egy csatornï¿½jï¿½t hogyan tï¿½roljuk
+		loaded_img->pixels);			// forrï¿½shoz pointer
 
 	if (generateMipMap)
 		glGenerateMipmap(static_cast<GLenum>(type));
