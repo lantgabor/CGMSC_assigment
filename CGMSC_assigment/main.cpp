@@ -6,8 +6,9 @@
 #include <SDL2/SDL_opengl.h>
 
 // ImGui
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_sdl_gl3.h>
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl.h"
+#include "imgui/imgui_impl_opengl3.h"
 
 // standard
 #include <iostream>
@@ -66,12 +67,12 @@ int main(int argc, char* args[])
 
 	// Create our window
 	SDL_Window *win = 0;
-	win = SDL_CreateWindow("Hello SDL&OpenGL!",		// az ablak fejlï¿½ce
-		100,						// az ablak bal-felsï¿½ sarkï¿½nak kezdeti X koordinï¿½tï¿½ja
-		100,						// az ablak bal-felsï¿½ sarkï¿½nak kezdeti Y koordinï¿½tï¿½ja
-		640,						// ablak szï¿½lessï¿½ge
-		480,						// ï¿½s magassï¿½ga
-		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);			// megjelenï¿½tï¿½si tulajdonsï¿½gok
+	win = SDL_CreateWindow("Hello SDL&OpenGL!",		// az ablak fejléce
+		100,						// az ablak bal-felsõ sarkának kezdeti X koordinátája
+		100,						// az ablak bal-felsõ sarkának kezdeti Y koordinátája
+		640,						// ablak szélessége
+		480,						// és magassága
+		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);			// megjelenítési tulajdonságok
 
 
 // If the window creation failed, print the error and exit
@@ -122,9 +123,12 @@ int main(int argc, char* args[])
 	std::stringstream window_title;
 	window_title << "OpenGL " << glVersion[0] << "." << glVersion[1];
 	SDL_SetWindowTitle(win, window_title.str().c_str());
-
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	
 	//Imgui init
-	ImGui_ImplSdlGL3_Init(win);
+	 ImGui_ImplSDL2_InitForOpenGL(win, context);
+	 ImGui_ImplOpenGL3_Init();
 
 	//
 	// Step 4: Start the event loop
@@ -150,7 +154,7 @@ int main(int argc, char* args[])
 			// While there is an event to process, process all of them
 			while (SDL_PollEvent(&ev))
 			{
-				ImGui_ImplSdlGL3_ProcessEvent(&ev);
+				ImGui_ImplSDL2_ProcessEvent(&ev);
 				bool is_mouse_captured = ImGui::GetIO().WantCaptureMouse; // Do we need mouse for imgui?
 				bool is_keyboard_captured = ImGui::GetIO().WantCaptureKeyboard;	// Do we need keyboard for imgui?
 				switch (ev.type)
@@ -193,12 +197,15 @@ int main(int argc, char* args[])
 				}
 
 			}
-			ImGui_ImplSdlGL3_NewFrame(win); //After this we can call imgui commands until ImGui::Render()
+			
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplSDL2_NewFrame(win);
+			ImGui::NewFrame();
 
 			app.Update();
 			app.Render();
 			ImGui::Render();
-
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 			SDL_GL_SwapWindow(win);
 		}
 
@@ -209,7 +216,9 @@ int main(int argc, char* args[])
 	//
 	// Step 4: exit
 	// 
-	ImGui_ImplSdlGL3_Shutdown();
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(win);
 
