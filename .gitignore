@@ -7,6 +7,8 @@
 build/
 Makefile
 
+CGMSC_assigment/imgui.ini
+
 # gitignore for C++
 # Compiled Object files
 *.slo
