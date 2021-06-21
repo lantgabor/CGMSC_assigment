@@ -21,8 +21,8 @@ bool CMyApp::Init()
 	glEnable(GL_DEPTH_TEST);		// Enable depth test
 
 	m_program.Init({			// Shader for drawing geometries
-		{ GL_VERTEX_SHADER,   "myVert.vert" },
-		{ GL_FRAGMENT_SHADER, "myFrag.frag" }
+		{ GL_VERTEX_SHADER,   "../res/myVert.vert" },
+		{ GL_FRAGMENT_SHADER, "../res/myFrag.frag" }
 	}/*,{						// This part is now shader defined!!
 		{ 0, "vs_in_pos"	},	// VAO index 0 will be vs_in_pos
 		{ 1, "vs_in_normal" },	// VAO index 1 will be vs_in_normal
@@ -30,8 +30,8 @@ bool CMyApp::Init()
 	}*/);
 
 	m_deferredPointlight.Init({ // A deferred shader for point lights
-		{ GL_VERTEX_SHADER,		"deferredPoint.vert" },
-		{ GL_FRAGMENT_SHADER,	"deferredPoint.frag" }
+		{ GL_VERTEX_SHADER,		"../res/deferredPoint.vert" },
+		{ GL_FRAGMENT_SHADER,	"../res/deferredPoint.frag" }
 	});
 
 	// Creating VBOs for the quad
@@ -48,10 +48,10 @@ bool CMyApp::Init()
 	m_vao.Unbind();
 
 	// Loading mesh
-	m_textureMetal.FromFile("texture.png");
+	m_textureMetal.FromFile("../res/texture.png");
 
 	// Loading texture
-	m_mesh = ObjParser::parse("suzanne.obj");
+	m_mesh = ObjParser::parse("../res/suzanne.obj");
 
 	// Camera
 	m_camera.SetProj(45.0f, 640.0f / 480.0f, 0.01f, 1000.0f);
