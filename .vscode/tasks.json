@@ -11,6 +11,11 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "./run.bat"
         }
     ]
 }
