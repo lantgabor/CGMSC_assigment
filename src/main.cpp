@@ -67,12 +67,12 @@ int main(int argc, char* args[])
 
 	// Create our window
 	SDL_Window *win = 0;
-	win = SDL_CreateWindow("Hello SDL&OpenGL!",		// az ablak fejléce
-		100,						// az ablak bal-felsõ sarkának kezdeti X koordinátája
-		100,						// az ablak bal-felsõ sarkának kezdeti Y koordinátája
-		640,						// ablak szélessége
-		480,						// és magassága
-		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);			// megjelenítési tulajdonságok
+	win = SDL_CreateWindow("Hello SDL&OpenGL!",		// az ablak fejlï¿½ce
+		250,						// az ablak bal-felsï¿½ sarkï¿½nak kezdeti X koordinï¿½tï¿½ja
+		250,						// az ablak bal-felsï¿½ sarkï¿½nak kezdeti Y koordinï¿½tï¿½ja
+		1280,						// ablak szï¿½lessï¿½ge
+		720,						// ï¿½s magassï¿½ga
+		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);			// megjelenï¿½tï¿½si tulajdonsï¿½gok
 
 
 // If the window creation failed, print the error and exit

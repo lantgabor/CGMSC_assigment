@@ -54,10 +54,10 @@ bool CMyApp::Init()
 	m_mesh = ObjParser::parse("../res/suzanne.obj");
 
 	// Camera
-	m_camera.SetProj(45.0f, 640.0f / 480.0f, 0.01f, 1000.0f);
+	m_camera.SetProj(45.0f, 1280.0f / 720.0f, 0.01f, 1000.0f);
 
 	// FBO - initial
-	CreateFrameBuffer(640, 480);
+	CreateFrameBuffer(1280, 720);
 
 	return true;
 }
