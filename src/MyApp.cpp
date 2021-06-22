@@ -165,12 +165,12 @@ void CMyApp::Render()
 	m_deferredPointlight.SetUniform("Ld", glm::vec4(0.5, 1, 1, 1));
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); // Second light
 
-	for( int i=0; i<10; i++)
-	{
-		m_deferredPointlight.SetUniform("lightPos", m_light_pos + glm::vec3(0,0,4.f)*float(i));
-		m_deferredPointlight.SetUniform("Ld", glm::vec4(float(i)/9.f,0.f,1.f-float(i)/9.f,1));
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); // First light
-	}
+	// for( int i=0; i<10; i++)
+	// {
+	// 	m_deferredPointlight.SetUniform("lightPos", m_light_pos + glm::vec3(0,0,4.f)*float(i));
+	// 	m_deferredPointlight.SetUniform("Ld", glm::vec4(float(i)/9.f,0.f,1.f-float(i)/9.f,1));
+	// 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); // First light
+	// }
 
 	// 2.4. Undo the blending options
 
@@ -180,10 +180,6 @@ void CMyApp::Render()
 
 	// 3.
 	// User Interface
-
-	// ImGui::ShowDemoWindow(); // Demo of all ImGui commands. See its implementation for details.
-	// 	// It's worth browsing imgui.h, as well as reading the FAQ at the beginning of imgui.cpp.
-	// 	// There is no regular documentation, but the things mentioned above should be sufficient.
 
 	ImGui::SetNextWindowPos(ImVec2(300, 400), ImGuiCond_FirstUseEver);
 	if(ImGui::Begin("Test window")) // Note that ImGui returns false when window is collapsed so we can early-out
