@@ -24,4 +24,5 @@ pushd .\build
 REM Actual build
 cl %COMPILER_SETTINGS% %FILES% -I ..\include %LIBS% /link /SUBSYSTEM:WINDOWS
 
+gCamera.exe
 popd
