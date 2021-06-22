@@ -17,7 +17,7 @@ CMyApp::~CMyApp(void){}
 bool CMyApp::Init()
 {
 	glClearColor(0.2, 0.4, 0.7, 1);	// Clear color is bluish
-	glEnable(GL_CULL_FACE);			// Drop faces looking backwards
+	// glEnable(GL_CULL_FACE);			// Drop faces looking backwards
 	glEnable(GL_DEPTH_TEST);		// Enable depth test
 
 	m_program.Init({			// Shader for drawing geometries
@@ -51,7 +51,7 @@ bool CMyApp::Init()
 	m_textureMetal.FromFile("../res/texture.png");
 
 	// Loading texture
-	m_mesh = ObjParser::parse("../res/suzanne.obj");
+	m_mesh = ObjParser::parse("../res/teapot.obj");
 
 	// Camera
 	m_camera.SetProj(45.0f, 1280.0f / 720.0f, 0.01f, 1000.0f);
@@ -182,7 +182,7 @@ void CMyApp::Render()
 	// User Interface
 
 	ImGui::SetNextWindowPos(ImVec2(300, 400), ImGuiCond_FirstUseEver);
-	if(ImGui::Begin("Test window")) // Note that ImGui returns false when window is collapsed so we can early-out
+	if(ImGui::Begin("Tools")) // Note that ImGui returns false when window is collapsed so we can early-out
 	{
 		ImGui::SliderFloat3("light_pos", &m_light_pos.x, -10.f, 10.f);
 		ImGui::Image((ImTextureID)m_diffuseBuffer  , ImVec2(256, 256), ImVec2(0,1), ImVec2(1,0));

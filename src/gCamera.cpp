@@ -42,6 +42,7 @@ void gCamera::SetView(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up)
 void gCamera::SetProj(float _angle, float _aspect, float _zn, float _zf)
 {
 	m_matProj = glm::perspective( _angle, _aspect, _zn, _zf);
+
 	m_matViewProj = m_matProj * m_viewMatrix;
 }
 
