@@ -1,8 +1,5 @@
 #pragma once
 
-// C++ includes
-#include <memory>
-
 // GLEW
 #include <GL/glew.h>
 
@@ -15,13 +12,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform2.hpp>
 
-#include "ProgramObject.h"
-#include "BufferObject.h"
-#include "VertexArrayObject.h"
-#include "TextureObject.h"
-
-#include "Mesh_OGL3.h"
 #include "gCamera.h"
+#include "gShaderProgram.h"
+#include "gVertexBuffer.h"
+#include "Mesh_OGL3.h"
 
 class CMyApp
 {
@@ -43,30 +37,19 @@ public:
 	void MouseWheel(SDL_MouseWheelEvent&);
 	void Resize(int, int);
 protected:
-	// FBO creating function
-	void CreateFrameBuffer(int width, int height);
-	void DrawScene(const glm::mat4& viewProj, ProgramObject& program);
+	// bels� elj�r�sok
+	GLuint GenTexture();
 
-	// variables for shaders
-	ProgramObject		m_program;				// basic program for shaders
-	ProgramObject		m_deferredPointlight;	// A deffered shader program to draw point lightsources
+	// OpenGL-es dolgok
+	GLuint m_textureID; // text�ra er�forr�s azonos�t�
 
-	Texture2D			m_textureMetal;
+	gCamera			m_camera;
+	gShaderProgram	m_program;
+	gVertexBuffer	m_vb;
 
-	VertexArrayObject	m_vao;
-	std::unique_ptr<Mesh>	m_mesh;
+	gShaderProgram	m_sphere_program;
+	gVertexBuffer	m_quad_vb;
 
-	gCamera				m_camera;
-
-	glm::vec3 m_light_pos = glm::vec3(0, 10, 0);
-	float	m_filterWeight{};
-
-	// stuffs for the FBO
-	bool m_frameBufferCreated{ false };
-	GLuint m_frameBuffer;
-	GLuint m_diffuseBuffer;
-	GLuint m_normalBuffer;
-	GLuint m_position_Buffer;
-	GLuint m_depthBuffer;
+	Mesh			*m_mesh;
 };
 

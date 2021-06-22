@@ -22,7 +22,7 @@ IF NOT EXIST .\build mkdir .\build
 pushd .\build
 
 REM Actual build
-cl %COMPILER_SETTINGS% %FILES% -I ..\include %LIBS% /link /SUBSYSTEM:WINDOWS
+cl %COMPILER_SETTINGS% %FILES% -I ..\include %LIBS% /link /SUBSYSTEM:CONSOLE
 
 gCamera.exe
 popd

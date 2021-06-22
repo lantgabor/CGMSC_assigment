@@ -12,7 +12,7 @@ gCamera::gCamera(void) : m_eye(0.0f, 20.0f, 20.0f), m_at(0.0f), m_up(0.0f, 1.0f,
 
 	m_dist = glm::length( m_at - m_eye );	
 
-	SetProj(45.0f, 640/480.0f, 0.001f, 1000.0f);
+	SetProj(45.0f, 1280/720.0f, 0.001f, 1000.0f);
 }
 
 gCamera::gCamera(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up) : m_speed(16.0f), m_goFw(0), m_goRight(0), m_dist(10), m_slow(false)
@@ -42,6 +42,7 @@ void gCamera::SetView(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up)
 void gCamera::SetProj(float _angle, float _aspect, float _zn, float _zf)
 {
 	m_matProj = glm::perspective( _angle, _aspect, _zn, _zf);
+
 	m_matViewProj = m_matProj * m_viewMatrix;
 }
 
