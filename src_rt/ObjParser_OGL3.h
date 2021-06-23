@@ -10,12 +10,10 @@
 
 #include "Mesh_OGL3.h"
 
-#include <memory>
-
 class ObjParser
 {
 public:
-	static std::unique_ptr<Mesh> parse(const char* fileName);
+	static Mesh* parse(const char* fileName);
 
 	enum Exception { EXC_FILENOTFOUND };
 private:

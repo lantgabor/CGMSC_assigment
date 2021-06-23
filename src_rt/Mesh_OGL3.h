@@ -34,6 +34,4 @@ private:
 
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
-
-	bool inited = false;
 };

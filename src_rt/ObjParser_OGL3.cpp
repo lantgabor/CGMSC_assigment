@@ -4,7 +4,7 @@
 
 using namespace std;
 
-std::unique_ptr<Mesh> ObjParser::parse(const char* fileName)
+Mesh* ObjParser::parse(const char* fileName)
 {
 	ObjParser theParser;
 
@@ -22,9 +22,7 @@ std::unique_ptr<Mesh> ObjParser::parse(const char* fileName)
 
 	theParser.ifs.close();
 
-	theParser.mesh->initBuffers();
-
-	return std::make_unique<Mesh>(*theParser.mesh);
+	return theParser.mesh;
 }
 
 bool ObjParser::processLine()

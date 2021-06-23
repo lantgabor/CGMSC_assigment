@@ -15,7 +15,7 @@ REM SET WARNING_SETTINGS=/W4 /WX
 REM SET DISABLED_WARNINGS=/wd4100 /wd4189 /wd4459 /wd4456 /wd4996 /wd4706 /wd4127 /wd4018 /wd4293 /wd4800 /wd4101
 
 SET LIBS=..\lib\x86\SDL2.lib ..\lib\x86\SDL2main.lib ..\lib\x86\SDL2_image.lib ..\lib\x86\glew32.lib opengl32.lib glu32.lib shell32.lib
-SET FILES=..\src\*.cpp ..\src\imgui\*.cpp
+SET FILES=..\src_rt\*.cpp ..\src_rt\imgui\*.cpp
 
 REM Going into build directory
 IF NOT EXIST .\build mkdir .\build

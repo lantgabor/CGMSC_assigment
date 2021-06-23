@@ -5,114 +5,117 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
+// ImGui
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl.h"
+#include "imgui/imgui_impl_opengl3.h"
+
+// standard
 #include <iostream>
 #include <sstream>
 
 #include "MyApp.h"
-#include "gTimer.h"
 
 void exitProgram()
 {
 	SDL_Quit();
 
-	std::cout << "Kil�p�shez nyomj meg egy billenty�t..." << std::endl;
+	std::cout << "Press a button to exit..." << std::endl;
 	std::cin.get();
 }
 
-int main( int argc, char* args[] )
+int main(int argc, char* args[])
 {
-	// �ll�tsuk be, hogy kil�p�s el�tt h�vja meg a rendszer az exitProgram() f�ggv�nyt - K�rd�s: mi lenne en�lk�l?
-	atexit( exitProgram );
+	// By this setting, the system will call exitProgram before this process terminates
+	// Question: What would happen without this?
+	atexit(exitProgram);
 
 	//
-	// 1. l�p�s: inicializ�ljuk az SDL-t
+	// Step 1: initialize SDL
 	//
 
-	// a grafikus alrendszert kapcsoljuk csak be, ha gond van, akkor jelezz�k �s l�pj�n ki
-	if ( SDL_Init( SDL_INIT_VIDEO ) == -1 )
+	// Turn on the graphical subsystem
+	// If there is an error, notify and exit
+	if (SDL_Init(SDL_INIT_VIDEO) == -1)
 	{
-		// irjuk ki a hibat es terminaljon a program
-		std::cout << "[SDL ind�t�sa]Hiba az SDL inicializ�l�sa k�zben: " << SDL_GetError() << std::endl;
+		// Print the error and terminate
+		std::cout << "[SDL start]Error during the initialization of SDL: " << SDL_GetError() << std::endl;
 		return 1;
 	}
-			
+
 	//
-	// 2. l�p�s: �ll�tsuk be az OpenGL-es ig�nyeinket, hozzuk l�tre az ablakunkat, ind�tsuk el az OpenGL-t
+	// Step 2: set OpenGL requirements, create our window, start OpenGL
 	//
 
-	// 2a: OpenGL ind�t�s�nak konfigur�l�sa, ezt az ablak l�trehoz�sa el�tt kell megtenni!
+	// 2a: Start-up configuration of OpenGL, this has to be done before the creation of any window
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-	// be�ll�thatjuk azt, hogy pontosan milyen OpenGL context-et szeretn�nk l�trehozni - ha nem tessz�k, akkor
-	// automatikusan a legmagasabb el�rhet� verzi�j�t kapjuk
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+	// Set the color depth (how many bits do we want to store red, green, blue and alpha(transparency) properties per pixel)
+	SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+	// Double buffering
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	// Size of depth buffer in bits
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-	// �ll�tsuk be, hogy h�ny biten szeretn�nk t�rolni a piros, z�ld, k�k �s �tl�tszatlans�gi inform�ci�kat pixelenk�nt
-    SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE,         32);
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE,            8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,          8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,           8);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE,          8);
-	// duplapufferel�s
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,		1);
-	// m�lys�gi puffer h�ny bites legyen
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,          24);
-
-	// antialiasing - ha kell
+	// Antialiasing - if needed
 	//SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,  1);
-	//SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,  4);
+	//SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,  2);
 
-	// hozzuk l�tre az ablakunkat
+	// Create our window
 	SDL_Window *win = 0;
-    win = SDL_CreateWindow( "Hello SDL&OpenGL!",		// az ablak fejl�ce
-							100,						// az ablak bal-fels� sark�nak kezdeti X koordin�t�ja
-							100,						// az ablak bal-fels� sark�nak kezdeti Y koordin�t�ja
-							640,						// ablak sz�less�ge
-							480,						// �s magass�ga
-							SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);			// megjelen�t�si tulajdons�gok
+	win = SDL_CreateWindow("Hello SDL&OpenGL!",		// az ablak fejl�ce
+		250,						// az ablak bal-fels� sark�nak kezdeti X koordin�t�ja
+		250,						// az ablak bal-fels� sark�nak kezdeti Y koordin�t�ja
+		1280,						// ablak sz�less�ge
+		720,						// �s magass�ga
+		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);			// megjelen�t�si tulajdons�gok
 
 
-	// ha nem siker�lt l�trehozni az ablakot, akkor �rjuk ki a hib�t, amit kaptunk �s l�pj�nk ki
-    if (win == 0)
+// If the window creation failed, print the error and exit
+	if (win == 0)
 	{
-		std::cout << "[Ablak l�trehoz�sa]Hiba az SDL inicializ�l�sa k�zben: " << SDL_GetError() << std::endl;
-        return 1;
-    }
-
-	//
-	// 3. l�p�s: hozzunk l�tre az OpenGL context-et - ezen kereszt�l fogunk rajzolni
-	//
-
-	SDL_GLContext	context	= SDL_GL_CreateContext(win);
-    if (context == 0)
-	{
-		std::cout << "[OGL context l�trehoz�sa]Hiba az SDL inicializ�l�sa k�zben: " << SDL_GetError() << std::endl;
-        return 1;
-    }	
-
-	// megjelen�t�s: v�rjuk be a vsync-et
-	SDL_GL_SetSwapInterval(0);
-
-	// ind�tsuk el a GLEW-t
-	GLenum error = glewInit();
-	if ( error != GLEW_OK )
-	{
-		std::cout << "[GLEW] Hiba az inicializ�l�s sor�n!" << std::endl;
+		std::cout << "[Window creation]Error during the initialization of SDL: " << SDL_GetError() << std::endl;
 		return 1;
 	}
 
-	// k�rdezz�k le az OpenGL verzi�t
-	int glVersion[2] = {-1, -1}; 
-	glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]); 
-	glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]); 
+	//
+	// Step 3: Create the OpenGL context: we will draw using this
+	//
+
+	SDL_GLContext	context = SDL_GL_CreateContext(win);
+	if (context == 0)
+	{
+		std::cout << "[OGL context creation]Error during the initialization of SDL: " << SDL_GetError() << std::endl;
+		return 1;
+	}
+
+	// Display: wait for vertical sync
+	SDL_GL_SetSwapInterval(1);
+
+	// Start GLEW
+	GLenum error = glewInit();
+	if (error != GLEW_OK)
+	{
+		std::cout << "[GLEW] Error during the initialization!" << std::endl;
+		return 1;
+	}
+
+	// Query the OpenGL version
+	int glVersion[2] = { -1, -1 };
+	glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
+	glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
 	std::cout << "Running OpenGL " << glVersion[0] << "." << glVersion[1] << std::endl;
 
-	if ( glVersion[0] == -1 && glVersion[1] == -1 )
+	if (glVersion[0] == -1 && glVersion[1] == -1)
 	{
 		SDL_GL_DeleteContext(context);
-		SDL_DestroyWindow( win );
+		SDL_DestroyWindow(win);
 
-		std::cout << "[OGL context l�trehoz�sa] Nem siker�lt l�trehozni az OpenGL context-et! Lehet, hogy az SDL_GL_SetAttribute(...) h�v�sokn�l az egyik be�ll�t�s helytelen." << std::endl;
+		std::cout << "[OGL context creation] Error during the creation of the OpenGL context! One of the attributes at SDL_GL_SetAttribute(...) might be wrong." << std::endl;
 
 		return 1;
 	}
@@ -120,88 +123,104 @@ int main( int argc, char* args[] )
 	std::stringstream window_title;
 	window_title << "OpenGL " << glVersion[0] << "." << glVersion[1];
 	SDL_SetWindowTitle(win, window_title.str().c_str());
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	
+	//Imgui init
+	 ImGui_ImplSDL2_InitForOpenGL(win, context);
+	 ImGui_ImplOpenGL3_Init();
 
 	//
-	// 3. l�p�s: ind�tsuk el a f� �zenetfeldolgoz� ciklust
+	// Step 4: Start the event loop
 	// 
-
-	// v�get kell-e �rjen a program fut�sa?
-	bool quit = false;
-	// feldolgozand� �zenet ide ker�l
-	SDL_Event ev;
-	
-	// alkalmazas p�ld�nya
-	CMyApp app;
-	if (!app.Init())
 	{
-		SDL_DestroyWindow(win);
-		std::cout << "[app.Init] Az alkalmaz�s inicializ�l�sa k�zben hibat�rt�nt!" << std::endl;
-		return 1;
-	}
+		// Should the program end?
+		bool quit = false;
+		// Event to be processed
+		SDL_Event ev;
 
-	gTimer nanoTimer;
-
-	while (!quit)
-	{
-		// am�g van feldolgozand� �zenet dolgozzuk fel mindet:
-		while ( SDL_PollEvent(&ev) )
+		// Instance of the application
+		CMyApp app;
+		if (!app.Init())
 		{
-			switch (ev.type)
-			{
-			case SDL_QUIT:
-				quit = true;
-				break;
-			case SDL_KEYDOWN:
-				if ( ev.key.keysym.sym == SDLK_ESCAPE )
-					quit = true;
-				app.KeyboardDown(ev.key);
-				break;
-			case SDL_KEYUP:
-				app.KeyboardUp(ev.key);
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				app.MouseDown(ev.button);
-				break;
-			case SDL_MOUSEBUTTONUP:
-				app.MouseUp(ev.button);
-				break;
-			case SDL_MOUSEWHEEL:
-				app.MouseWheel(ev.wheel);
-				break;
-			case SDL_MOUSEMOTION:
-				app.MouseMove(ev.motion);
-				break;
-			case SDL_WINDOWEVENT:
-				if ( ev.window.event == SDL_WINDOWEVENT_SIZE_CHANGED )
-				{
-					app.Resize(ev.window.data1, ev.window.data2);
-				}
-				break;
-			}
+			SDL_GL_DeleteContext(context);
+			SDL_DestroyWindow(win);
+			std::cout << "[app.Init] Error during the initialization of the application!" << std::endl;
+			return 1;
 		}
 
-		nanoTimer.Start();
-		app.Update();
-		app.Render();
+		while (!quit)
+		{
+			// While there is an event to process, process all of them
+			while (SDL_PollEvent(&ev))
+			{
+				ImGui_ImplSDL2_ProcessEvent(&ev);
+				bool is_mouse_captured = ImGui::GetIO().WantCaptureMouse; // Do we need mouse for imgui?
+				bool is_keyboard_captured = ImGui::GetIO().WantCaptureKeyboard;	// Do we need keyboard for imgui?
+				switch (ev.type)
+				{
+				case SDL_QUIT:
+					quit = true;
+					break;
+				case SDL_KEYDOWN:
+					if (ev.key.keysym.sym == SDLK_ESCAPE)
+						quit = true;
+					if (!is_keyboard_captured)
+						app.KeyboardDown(ev.key);
+					break;
+				case SDL_KEYUP:
+					if (!is_keyboard_captured)
+						app.KeyboardUp(ev.key);
+					break;
+				case SDL_MOUSEBUTTONDOWN:
+					if (!is_mouse_captured)
+						app.MouseDown(ev.button);
+					break;
+				case SDL_MOUSEBUTTONUP:
+					if (!is_mouse_captured)
+						app.MouseUp(ev.button);
+					break;
+				case SDL_MOUSEWHEEL:
+					if (!is_mouse_captured)
+						app.MouseWheel(ev.wheel);
+					break;
+				case SDL_MOUSEMOTION:
+					if (!is_mouse_captured)
+						app.MouseMove(ev.motion);
+					break;
+				case SDL_WINDOWEVENT:
+					if (ev.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+					{
+						app.Resize(ev.window.data1, ev.window.data2);
+					}
+					break;
+				}
 
-		window_title.str(std::string());
-		window_title.precision(4);
-		window_title << "OpenGL " << glVersion[0] << "." << glVersion[1] << ", last frame: " << nanoTimer.StopMillis() << "ms";
-		SDL_SetWindowTitle(win, window_title.str().c_str());
+			}
+			
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplSDL2_NewFrame(win);
+			ImGui::NewFrame();
 
-		SDL_GL_SwapWindow(win);
-	}
+			app.Update();
+			app.Render();
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			SDL_GL_SwapWindow(win);
+		}
 
+		// The object should clean after itself
+		app.Clean();
+	}	// the destructor of the app will run while our context is alive => destructors of classes including the GPU resources will run here too
 
 	//
-	// 4. l�p�s: l�pj�nk ki
+	// Step 4: exit
 	// 
-
-	// takar�tson el maga ut�n az objektumunk
-	app.Clean();
-
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
 	SDL_GL_DeleteContext(context);
-	SDL_DestroyWindow( win );
+	SDL_DestroyWindow(win);
 
 	return 0;
 }
