@@ -12,10 +12,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform2.hpp>
 
-#include "gCamera.h"
 #include "gShaderProgram.h"
 #include "gVertexBuffer.h"
+
 #include "Mesh_OGL3.h"
+#include "gCamera.h"
 
 class CMyApp
 {
@@ -37,7 +38,6 @@ public:
 	void MouseWheel(SDL_MouseWheelEvent&);
 	void Resize(int, int);
 protected:
-	// bels� elj�r�sok
 	GLuint GenTexture();
 
 	// OpenGL-es dolgok
@@ -51,5 +51,7 @@ protected:
 	gVertexBuffer	m_quad_vb;
 
 	Mesh			*m_mesh;
+
+	glm::vec3 lightPos = glm::vec3(0,20,0);
 };
 

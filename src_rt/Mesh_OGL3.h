@@ -19,6 +19,7 @@ public:
 	~Mesh(void);
 
 	void initBuffers();
+	void initUBO();
 	void draw();
 
 	void addVertex(const Vertex& vertex) {
@@ -31,6 +32,8 @@ private:
 	GLuint vertexArrayObject;
 	GLuint vertexBuffer;
 	GLuint indexBuffer;
+
+	GLuint ubo_Mesh;
 
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;

@@ -32,6 +32,31 @@ void Mesh::initBuffers()
 	glBindVertexArray(0);
 }
 
+
+void Mesh::initUBO()
+{
+	printf("%d %d DEBUG", vertices.size(), indices.size());
+	glGenBuffers(1, &ubo_Mesh);
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo_Mesh);
+	glBufferData(GL_UNIFORM_BUFFER, 16 * 3 * 500 + 16* 500, NULL, GL_STATIC_DRAW); // vec3 * 3 aligned to 16
+	
+	for (int i=0; i<vertices.size(); ++i)
+	{
+		Vertex v = vertices[i];
+		glBufferSubData(GL_UNIFORM_BUFFER, 16 * 3 * i, 16 + 16 + 8, &v);
+	}
+
+	for (int j=0; j<indices.size(); ++j)
+	{
+		int idx = indices[j];
+		glBufferSubData(GL_UNIFORM_BUFFER, 16 * 3 * 500 + (16 * j), 4, &idx);
+	}
+
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 3, ubo_Mesh);
+
+}
+
 void Mesh::draw()
 {
 	glBindVertexArray(vertexArrayObject);

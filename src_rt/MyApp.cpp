@@ -5,6 +5,8 @@
 #include <math.h>
 
 #include "ObjParser_OGL3.h"
+#include "imgui/imgui.h"
+
 
 CMyApp::CMyApp(void)
 {
@@ -52,15 +54,9 @@ GLuint CMyApp::GenTexture()
 
 bool CMyApp::Init()
 {
-	// t�rl�si sz�n legyen k�kes
-	glClearColor(0.125f, 0.25f, 0.5f, 1.0f);
-
-	glEnable(GL_CULL_FACE);		// kapcsoljuk be a hatrafele nezo lapok eldobasat
-	glEnable(GL_DEPTH_TEST);	// m�lys�gi teszt bekapcsol�sa (takar�s)
-
-	//
-	// geometria letrehozasa
-	//
+	glClearColor(0.2, 0.4, 0.7, 1);	// Clear color is bluish
+	// glEnable(GL_CULL_FACE);			// Drop faces looking backwards
+	// glEnable(GL_DEPTH_TEST);		// Enable depth test
 
 	// talaj
 	m_vb.AddAttribute(0, 3);
@@ -87,7 +83,7 @@ bool CMyApp::Init()
 
 	m_vb.InitBuffers();
 
-	// teljes k�perny�t lefed� quad
+	// QUAD FOR WHOLE SCREEN
 	m_quad_vb.AddAttribute(0, 3);
 	
 	m_quad_vb.AddData( 0, -1, -1, 0 );
@@ -98,10 +94,10 @@ bool CMyApp::Init()
 	m_quad_vb.InitBuffers();
 
 	//
-	// shaderek bet�lt�se
+	// Load shaders
 	//
-	m_program.AttachShader(GL_VERTEX_SHADER, "../res/dirLight.vert");
-	m_program.AttachShader(GL_FRAGMENT_SHADER, "../res/dirLight.frag");
+	m_program.AttachShader(GL_VERTEX_SHADER, "../res/rt/dirLight.vert");
+	m_program.AttachShader(GL_FRAGMENT_SHADER, "../res/rt/dirLight.frag");
 
 	m_program.BindAttribLoc(0, "vs_in_pos");
 	m_program.BindAttribLoc(1, "vs_in_normal");
@@ -113,8 +109,8 @@ bool CMyApp::Init()
 	}
 
 	// gombshader
-	m_sphere_program.AttachShader(GL_VERTEX_SHADER,		"../res/sphere_a.vert");
-	m_sphere_program.AttachShader(GL_FRAGMENT_SHADER,	"../res/sphere_a.frag");
+	m_sphere_program.AttachShader(GL_VERTEX_SHADER,		"../res/rt/sphere_a.vert");
+	m_sphere_program.AttachShader(GL_FRAGMENT_SHADER,	"../res/rt/sphere_a.frag");
 
 	m_sphere_program.BindAttribLoc(0, "vs_in_pos");
 
@@ -123,18 +119,19 @@ bool CMyApp::Init()
 		return false;
 	}
 
-	//
-	// egy�b inicializ�l�s
-	//
-
+	// Camera
 	m_camera.SetProj(45.0f, 640.0f/480.0f, 0.01f, 1000.0f);
 
-	// text�ra bet�lt�se
+	// Loading texture
 	m_textureID = TextureFromFile("../res/texture.png");
 
-	// mesh bet�lt�s
+	// Loading mesh
 	m_mesh = ObjParser::parse("../res/suzanne.obj");
-	m_mesh->initBuffers();
+
+
+
+	m_mesh->initUBO();
+	// m_mesh->initBuffers();
 
 	return true;
 }
@@ -166,68 +163,79 @@ void CMyApp::Render()
 	// t�r�lj�k a frampuffert (GL_COLOR_BUFFER_BIT) �s a m�lys�gi Z puffert (GL_DEPTH_BUFFER_BIT)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	m_program.On();
+	// m_program.On();
 
-		glm::mat4 matWorld = glm::mat4(1.0f);
-		glm::mat4 matWorldIT = glm::transpose( glm::inverse( matWorld ) );
-		glm::mat4 mvp = m_camera.GetViewProj() *matWorld;
+	// 	glm::mat4 matWorld = glm::mat4(1.0f);
+	// 	glm::mat4 matWorldIT = glm::transpose( glm::inverse( matWorld ) );
+	// 	glm::mat4 mvp = m_camera.GetViewProj() *matWorld;
 
-		m_program.SetUniform( "Kd", glm::vec4(1,0.5f,0.5f,1) );
-		m_program.SetUniform( "world", matWorld );
-		m_program.SetUniform( "worldIT", matWorldIT );
-		m_program.SetUniform( "MVP", mvp );
-		m_program.SetUniform( "eye_pos", m_camera.GetEye() );
+	// 	m_program.SetUniform( "Kd", glm::vec4(1,0.5f,0.5f,1) );
+	// 	m_program.SetUniform( "world", matWorld );
+	// 	m_program.SetUniform( "worldIT", matWorldIT );
+	// 	m_program.SetUniform( "MVP", mvp );
+	// 	m_program.SetUniform( "eye_pos", m_camera.GetEye() );
 
-		m_program.SetTexture("texImage", 0, m_textureID);
+	// 	m_program.SetTexture("texImage", 0, m_textureID);
 
-		// kapcsoljuk be a VAO-t (a VBO j�n vele egy�tt)
-		m_vb.On();
+	// 	// kapcsoljuk be a VAO-t (a VBO j�n vele egy�tt)
+	// 	m_vb.On();
 
-			m_vb.DrawIndexed(GL_TRIANGLES, 0, 6, 0);
+	// 		m_vb.DrawIndexed(GL_TRIANGLES, 0, 6, 0);
 
-		m_vb.Off();
+	// 	m_vb.Off();
 
-	// shader kikapcsolasa
-	m_program.Off();
+	// // shader kikapcsolasa
+	// m_program.Off();
 
-	// 2. program
-	m_program.On();
+	// // 2. program
+	// m_program.On();
 
-		matWorld = glm::translate( glm::vec3(0, 1, 0) );
-		matWorldIT = glm::transpose( glm::inverse( matWorld ) );
-		mvp = m_camera.GetViewProj() *matWorld;
+	// 	matWorld = glm::translate( glm::vec3(0, 1, 0) );
+	// 	matWorldIT = glm::transpose( glm::inverse( matWorld ) );
+	// 	mvp = m_camera.GetViewProj() *matWorld;
 
-		m_program.SetUniform( "Kd", glm::vec4(1,1,1,1) );
-		m_program.SetUniform( "world", matWorld );
-		m_program.SetUniform( "worldIT", matWorldIT );
-		m_program.SetUniform( "MVP", mvp );
-		m_program.SetUniform( "eye_pos", m_camera.GetEye() );
+	// 	m_program.SetUniform( "Kd", glm::vec4(1,1,1,1) );
+	// 	m_program.SetUniform( "world", matWorld );
+	// 	m_program.SetUniform( "worldIT", matWorldIT );
+	// 	m_program.SetUniform( "MVP", mvp );
+	// 	m_program.SetUniform( "eye_pos", m_camera.GetEye() );
 
-		m_program.SetTexture("texture", 0, m_textureID);
+	// 	m_program.SetTexture("texture", 0, m_textureID);
 
-		m_mesh->draw();
+	// 	m_mesh->draw();
 
-	m_program.Off();
+	// m_program.Off();
 
-	// g�mbshader
 
+	// Ray trace shader
 	m_sphere_program.On();
 
 		m_quad_vb.On();
 
-			glm::mat4 sphere_world = glm::translate( glm::vec3(2,1,0) );
+			glm::mat4 sphere_world = glm::translate( glm::vec3(0,0,0) );
 
 			m_sphere_program.SetUniform("viewProj",		m_camera.GetViewProj() );
 			m_sphere_program.SetUniform("viewIprojI",	glm::inverse( m_camera.GetProj() * m_camera.GetViewMatrix() ) );
 			m_sphere_program.SetUniform("view",			m_camera.GetViewMatrix() );
 			m_sphere_program.SetUniform("modelI",		glm::inverse(sphere_world) );
 			m_sphere_program.SetUniform("model",		sphere_world );
+			m_sphere_program.SetUniform("lightPos",		lightPos );
 
 			m_quad_vb.Draw(GL_TRIANGLE_STRIP, 0, 4);
 
 		m_quad_vb.Off();
 
 	m_sphere_program.Off();
+
+	ImGui::SetNextWindowPos(ImVec2(300, 400), ImGuiCond_FirstUseEver);
+	if(ImGui::Begin("Tools")) // Note that ImGui returns false when window is collapsed so we can early-out
+	{
+		ImGui::SliderFloat3("light_pos", &lightPos.x, -10.f, 10.f);
+	}
+	ImGui::End(); // In either case, ImGui::End() needs to be called for ImGui::Begin().
+		// Note that other commands may work differently and may not need an End* if Begin* returned false.
+
+
 }
 
 void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
@@ -257,7 +265,6 @@ void CMyApp::MouseWheel(SDL_MouseWheelEvent& wheel)
 {
 }
 
-// a k�t param�terbe az �j ablakm�ret sz�less�ge (_w) �s magass�ga (_h) tal�lhat�
 void CMyApp::Resize(int _w, int _h)
 {
 	glViewport(0, 0, _w, _h);

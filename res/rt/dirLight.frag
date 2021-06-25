@@ -1,27 +1,27 @@
 #version 130
 
-// pipeline-ból bejövõ per-fragment attribútumok
+// pipeline-bï¿½l bejï¿½vï¿½ per-fragment attribï¿½tumok
 in vec3 vs_out_pos;
 in vec3 vs_out_normal;
 in vec2 vs_out_tex0;
 
-// kimenõ érték - a fragment színe
+// kimenï¿½ ï¿½rtï¿½k - a fragment szï¿½ne
 out vec4 fs_out_col;
 
 //
-// uniform változók
+// uniform vï¿½ltozï¿½k
 //
 
-// színtér tulajdonságok
+// szï¿½ntï¿½r tulajdonsï¿½gok
 uniform vec3 eye_pos = vec3(0, 15, 15);
 
-// fénytulajdonságok
+// fï¿½nytulajdonsï¿½gok
 uniform vec3 light_pos = vec3( 0, 5, 0 );
 uniform vec4 La = vec4(0.1f, 0.1f, 0.1f, 1);
 uniform vec4 Ld = vec4(0.5f, 0.5f, 0.5f, 1);
 uniform vec4 Ls = vec4(1, 1, 1, 1);
 
-// anyagtulajdonságok
+// anyagtulajdonsï¿½gok
 uniform vec4 Ka = vec4(1, 1, 1, 1);
 uniform vec4 Kd = vec4(0.75f, 0.25f, 0.125f, 1);
 uniform vec4 Ks = vec4(0, 1, 0, 1);
@@ -31,17 +31,17 @@ uniform sampler2D texture;
 void main()
 {
 	//
-	// ambiens szín számítása
+	// ambiens szï¿½n szï¿½mï¿½tï¿½sa
 	//
 	vec4 ambient = La * Ka;
 
 	//
-	// diffúz szín számítása
+	// diffï¿½z szï¿½n szï¿½mï¿½tï¿½sa
 	//
 
-	/* segítség:
-		- normalizálás: http://www.opengl.org/sdk/docs/manglsl/xhtml/normalize.xml
-	    - skaláris szorzat: http://www.opengl.org/sdk/docs/manglsl/xhtml/dot.xml
+	/* segï¿½tsï¿½g:
+		- normalizï¿½lï¿½s: http://www.opengl.org/sdk/docs/manglsl/xhtml/normalize.xml
+	    - skalï¿½ris szorzat: http://www.opengl.org/sdk/docs/manglsl/xhtml/dot.xml
 	    - clamp: http://www.opengl.org/sdk/docs/manglsl/xhtml/clamp.xml
 	*/
 	vec3 normal = normalize( vs_out_normal );
@@ -50,10 +50,10 @@ void main()
 	vec4 diffuse = Ld*Kd*di;
 
 	//
-	// fényfoltképzõ szín
+	// fï¿½nyfoltkï¿½pzï¿½ szï¿½n
 	//
 
-	/* segítség:
+	/* segï¿½tsï¿½g:
 		- reflect: http://www.opengl.org/sdk/docs/manglsl/xhtml/reflect.xml
 		- power: http://www.opengl.org/sdk/docs/manglsl/xhtml/pow.xml
 	*/
