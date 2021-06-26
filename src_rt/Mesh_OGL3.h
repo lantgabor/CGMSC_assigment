@@ -10,9 +10,9 @@ class Mesh
 public:
 	struct Vertex
 	{
-		glm::vec3 position;
-		glm::vec3 normal;
-		glm::vec2 texcoord;
+		glm::vec4 position;
+		glm::vec4 normal;
+		glm::vec4 texcoord;
 	};
 
 	Mesh(void);
@@ -33,7 +33,8 @@ private:
 	GLuint vertexBuffer;
 	GLuint indexBuffer;
 
-	GLuint ubo_Mesh;
+	GLuint ssbo_Vertices;
+	GLuint ssbo_Indices;
 
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;

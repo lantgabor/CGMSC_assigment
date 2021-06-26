@@ -230,7 +230,7 @@ void CMyApp::Render()
 	ImGui::SetNextWindowPos(ImVec2(300, 400), ImGuiCond_FirstUseEver);
 	if(ImGui::Begin("Tools")) // Note that ImGui returns false when window is collapsed so we can early-out
 	{
-		ImGui::SliderFloat3("light_pos", &lightPos.x, -10.f, 10.f);
+		ImGui::SliderFloat3("light_pos", &lightPos.x, -50.f, 50.f);
 	}
 	ImGui::End(); // In either case, ImGui::End() needs to be called for ImGui::Begin().
 		// Note that other commands may work differently and may not need an End* if Begin* returned false.

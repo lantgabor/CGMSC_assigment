@@ -2,15 +2,19 @@
 
 
 struct Vertex{
-    vec3 position;
-    vec3 normal;
-    vec2 texcoord;
+    vec4 position;
+    vec4 normal;
+    vec4 texcoord;
 };
 
-layout (std140, binding=0) uniform ubo_Mesh
+layout (std430, binding=2) buffer ssbo_Vertices
 {
-    Vertex vertices[500];
-    int indices[500];
+    Vertex vertices[];
+};
+
+layout (std430, binding=3) buffer ssbo_Indices
+{
+    int indices[];
 };
 
 in vec3 vs_out_pos;
@@ -64,7 +68,7 @@ struct IntersectionPoint{
 
 vec3 outIntersectionPoint;
 
-Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2){
+Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
 
     Hit hit;
     float t; float u; float v;
@@ -103,12 +107,13 @@ Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2){
 Hit firstIntersect(Ray ray){
     Hit besthit;
     besthit.t=-1;
-    for (int i =3; i< indices.length(); i+=3){
+    for (int i =0; i< vertices.length()-10; ++i){
 
-        vec3 TrianglePointA=vertices[i-2].position;
-        vec3 TrianglePointB=vertices[i-1].position;
-        vec3 TrianglePointC=vertices[i].position;
-        Hit hit=rayTriangleIntersect(ray, TrianglePointA, TrianglePointB, TrianglePointC);
+        vec3 A=vertices[indices[3*i]].position.xyz;
+        vec3 B=vertices[indices[3*i+1]].position.xyz;
+        vec3 C=vertices[indices[3*i+2]].position.xyz;
+        vec3 N = vertices[indices[3*i]].normal.xyz;
+        Hit hit=rayTriangleIntersect(ray, A, B, C, N);
 
         if (hit.t>0 && (besthit.t>hit.t || besthit.t<0)){
             besthit=hit;
@@ -119,31 +124,36 @@ Hit firstIntersect(Ray ray){
 }
 
 vec3 trace(Ray ray){
-    vec3 color;
-    vec3 ka=vec3(0.5215, 0.1745, 0.0215);
+    vec3 color= vec3(0, 0, 0);
+    vec3 ka= vec3(0.135, 0.2225, 0.1575);
+    vec3 kd= vec3(0.54, 0.89, 0.63);
 
-	Light light;
+    Light light;
 	light.Le = vec3(0.3,0.5,0.4);
 	light.La = vec3(0.2,0.2,0.5);
+    light.direction = lightPos;
 
-    Hit hit;
-    hit=firstIntersect(ray);
-    if (hit.t==-1){
-        return light.La;
-    }
+    Hit hit=firstIntersect(ray);
+
+    if (hit.t==-1){ return light.La; }
+
     color=light.La*ka;
 
-    Ray shadowRay;
-    shadowRay.orig=hit.orig+hit.normal*0.0001f;
-    shadowRay.dir=lightPos;
-
-        Hit shadowHit=firstIntersect(shadowRay);
-        if (shadowHit.t<0){
-            color+=light.Le;
+// The below part is under contruction, but functions well.
+        Ray shadowRay;
+        shadowRay.orig=hit.orig+hit.normal*0.001f;
+        shadowRay.dir=light.direction;
+        float cosTheta = dot(hit.normal, light.direction)/(length(hit.normal)*length(light.direction));
+        if (cosTheta > 0){
+            color+=light.Le*cosTheta*kd;
+            float cosDelta=dot(hit.normal, normalize(-ray.dir + light.direction));
+            if (cosDelta>0){
+                color=color+light.Le*vec3(0.316228, 0.316228, 0.316228)*pow(0.1, cosDelta);
+            }
         }
+        return color;
+    }
 
-    return color;
-}
 
 void main()
 {

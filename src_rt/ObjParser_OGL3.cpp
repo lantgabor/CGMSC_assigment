@@ -35,11 +35,11 @@ bool ObjParser::processLine()
 
 	if ("v" == line_id) {	//	vertex data
 		ifs >> x >> y >> z;
-		positions.push_back(glm::vec3(x, y, z));
+		positions.push_back(glm::vec4(x, y, z, 1));
 	}
 	else if ("vt" == line_id) {	// texture data
 		ifs >> x >> y;
-		texcoords.push_back(glm::vec2(x, y));
+		texcoords.push_back(glm::vec4(x, y, 0,0));
 	}
 	else if ("vn" == line_id) {	// normal data
 		ifs >> x >> y >> z;
@@ -48,7 +48,7 @@ bool ObjParser::processLine()
 			ifs.clear();
 			skipLine();
 		}
-		normals.push_back(glm::vec3(x, y, z));
+		normals.push_back(glm::vec4(x, y, z, 0));
 	}
 	else if("f" == line_id)	{
 		unsigned int iPosition = 0, iTexCoord = 0, iNormal = 0;

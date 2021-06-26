@@ -35,9 +35,9 @@ private:
 	Mesh* mesh;
 	std::ifstream ifs;
 
-	std::vector<glm::vec3> positions;
-	std::vector<glm::vec3> normals;
-	std::vector<glm::vec2> texcoords;
+	std::vector<glm::vec4> positions;
+	std::vector<glm::vec4> normals;
+	std::vector<glm::vec4> texcoords;
 
 	unsigned int nIndexedVerts;
 	std::map<IndexedVert, unsigned int> vertexIndices;
