@@ -99,7 +99,7 @@ Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
     }
 
     hit.t = dot(v0v2, qvec) * invDet;
-    hit.normal= cross(v0v1, v0v2);
+    hit.normal= N; //cross(v0v1, v0v2);
     return hit;
 }
 
@@ -107,7 +107,7 @@ Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
 Hit firstIntersect(Ray ray){
     Hit besthit;
     besthit.t=-1;
-    for (int i =0; i< vertices.length()-10; ++i){
+    for (int i =0; i< indices.length(); ++i){
 
         vec3 A=vertices[indices[3*i]].position.xyz;
         vec3 B=vertices[indices[3*i+1]].position.xyz;
