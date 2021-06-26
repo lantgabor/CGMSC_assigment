@@ -7,7 +7,7 @@ struct Vertex{
     vec2 texcoord;
 };
 
-layout (std140, binding=3) uniform ubo_Mesh
+layout (std140, binding=0) uniform ubo_Mesh
 {
     Vertex vertices[500];
     int indices[500];

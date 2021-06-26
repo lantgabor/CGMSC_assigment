@@ -53,7 +53,7 @@ void Mesh::initUBO()
 	}
 
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 3, ubo_Mesh);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo_Mesh);
 
 }
 
