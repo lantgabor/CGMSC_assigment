@@ -1,7 +1,7 @@
 #include "MyApp.h"
 #include "GLUtils.hpp"
 
-#include <GL/GLU.h>
+#include <GL/glu.h>
 #include <math.h>
 
 #include "ObjParser_OGL3.h"
@@ -126,11 +126,10 @@ bool CMyApp::Init()
 	m_textureID = TextureFromFile("../res/texture.png");
 
 	// Loading mesh
-	m_mesh = ObjParser::parse("../res/suzanne.obj");
-
-
+	m_mesh = ObjParser::parse("../res/teapot.obj", new Mesh());
 
 	m_mesh->initUBO();
+	grid.addMesh(m_mesh);
 	// m_mesh->initBuffers();
 
 	return true;
@@ -212,7 +211,7 @@ void CMyApp::Render()
 
 		m_quad_vb.On();
 
-			glm::mat4 sphere_world = glm::translate( glm::vec3(0,0,0) );
+			glm::mat4 sphere_world = glm::translate( world );
 
 			m_sphere_program.SetUniform("viewProj",		m_camera.GetViewProj() );
 			m_sphere_program.SetUniform("viewIprojI",	glm::inverse( m_camera.GetProj() * m_camera.GetViewMatrix() ) );
@@ -220,6 +219,7 @@ void CMyApp::Render()
 			m_sphere_program.SetUniform("modelI",		glm::inverse(sphere_world) );
 			m_sphere_program.SetUniform("model",		sphere_world );
 			m_sphere_program.SetUniform("lightPos",		lightPos );
+			m_sphere_program.SetUniform("translate", 	translate );
 
 			m_quad_vb.Draw(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -231,6 +231,7 @@ void CMyApp::Render()
 	if(ImGui::Begin("Tools")) // Note that ImGui returns false when window is collapsed so we can early-out
 	{
 		ImGui::SliderFloat3("light_pos", &lightPos.x, -50.f, 50.f);
+		ImGui::SliderFloat3("translate", &translate.x, -10.f, 10.f);
 	}
 	ImGui::End(); // In either case, ImGui::End() needs to be called for ImGui::Begin().
 		// Note that other commands may work differently and may not need an End* if Begin* returned false.

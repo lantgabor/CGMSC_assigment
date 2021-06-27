@@ -36,13 +36,6 @@ void Mesh::initBuffers()
 void Mesh::initUBO()
 {
 
-	// for (int i = 0; i < vertices.size()-10; ++i){
-	// 	printf("%d ", indices[3*i]);
-	// 	// printf(" V %f %f %f", vertices[indices[3*i]].position.x, vertices[indices[3*i+1]].position.y, vertices[indices[3*i+2]].position.z);
-	// 	// printf(" N %lf %lf %lf", vertices[indices[3*i]].normal.x, vertices[indices[3*i]].normal.y, vertices[indices[3*i]].normal.z);
-	// 	printf("\n");
-	// }
-
 	glGenBuffers(1, &ssbo_Vertices);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_Vertices);
 

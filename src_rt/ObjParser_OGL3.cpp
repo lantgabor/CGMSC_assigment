@@ -4,7 +4,7 @@
 
 using namespace std;
 
-Mesh* ObjParser::parse(const char* fileName)
+Mesh* ObjParser::parse(const char* fileName, Mesh* m)
 {
 	ObjParser theParser;
 
@@ -12,7 +12,7 @@ Mesh* ObjParser::parse(const char* fileName)
 	if (!theParser.ifs)
 		throw(EXC_FILENOTFOUND);
 
-	theParser.mesh = new Mesh();
+	theParser.mesh = m; //new Mesh();
 
 	while(theParser.skipCommentLine()) 
 	{

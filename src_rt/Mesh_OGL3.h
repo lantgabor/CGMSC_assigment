@@ -28,6 +28,8 @@ public:
 	void addIndex(unsigned int index) {
 		indices.push_back(index);
 	}
+	std::vector<Vertex> vertices;
+	std::vector<unsigned int> indices;
 private:
 	GLuint vertexArrayObject;
 	GLuint vertexBuffer;
@@ -36,6 +38,4 @@ private:
 	GLuint ssbo_Vertices;
 	GLuint ssbo_Indices;
 
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
 };

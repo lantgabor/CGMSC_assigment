@@ -17,6 +17,7 @@
 
 #include "Mesh_OGL3.h"
 #include "gCamera.h"
+#include "Grid.h"
 
 class CMyApp
 {
@@ -51,7 +52,10 @@ protected:
 	gVertexBuffer	m_quad_vb;
 
 	Mesh			*m_mesh;
+	Grid			grid = Grid();
 
 	glm::vec3 lightPos = glm::vec3(0,20,0);
+	glm::vec3 world = glm::vec3(0,0,0);
+	glm::vec3 translate = glm::vec3(0,0,0);
 };
 
