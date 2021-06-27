@@ -53,7 +53,7 @@ bool CMyApp::Init()
 	// m_textureID = TextureFromFile("../res/texture.png");
 
 	// Loading mesh
-	m_mesh = ObjParser::parse("../res/suzanne.obj", new Mesh());
+	m_mesh = ObjParser::parse("../res/teapot.obj", new Mesh());
 
 	m_mesh->initUBO();
 	grid.addMesh(m_mesh);
@@ -102,7 +102,6 @@ void CMyApp::Render()
 			m_sphere_program.SetUniform("lights[0].La",		La );
 			m_sphere_program.SetUniform("shininess", 	shininess );
 			m_sphere_program.SetUniform("translate", 	translate );
-			m_sphere_program.SetUniform("translate", 	translate );
 
 			m_quad_vb.Draw(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -113,7 +112,7 @@ void CMyApp::Render()
 	ImGui::SetNextWindowPos(ImVec2(300, 400), ImGuiCond_FirstUseEver);
 	if(ImGui::Begin("Tools")) // Note that ImGui returns false when window is collapsed so we can early-out
 	{
-		ImGui::SliderFloat3("light_pos", &lightPos.x, -50.f, 50.f);
+		ImGui::SliderFloat3("light_pos", &lightPos.x, -1.f, 1.f);
 		ImGui::SliderFloat3("Le", &Le.x, 0.f, 1.f);
 		ImGui::SliderFloat("shininess", &shininess, 0.1f, 55.f);
 		// ImGui::SliderFloat3("translate", &translate.x, -10.f, 10.f);

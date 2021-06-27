@@ -1,6 +1,7 @@
 #version 460 core
 
 #define MAX_LIGHTHS 2
+#define DEPTH 2
 
 in vec3 vs_out_pos;
 
@@ -24,6 +25,7 @@ struct Ray{
 struct Hit{
     vec3 orig, normal;
     float t;
+    int mat;
 };
 
 uniform mat4 viewProj;
@@ -48,6 +50,10 @@ layout (std430, binding=3) buffer ssbo_Indices
     int indices[];
 };
 
+struct Sphere {
+    vec3 center;
+    float radius;
+};
 
 void getRay(in vec3 inVec, out vec3 rayOrig, out vec3 rayDir)
 {
@@ -95,12 +101,75 @@ Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
     }
 
     hit.t = dot(edge2, q) * invDet; // t
-    hit.normal= N; // normal
+    hit.normal=  N; // normal // cross(edge1, edge2); //
+    hit.mat = 0;
     return hit;
 }
 
+Hit plane(const vec3 n, const float d, const Ray ray)
+{
+    Hit hit;
+    hit.t = -1;
+	float denominator = dot(n, ray.dir);
+	if(abs(denominator) < 0.001)
+	{
+		//no intersection
+		return hit;
+	}
+	hit.t = (-d-dot(n, ray.orig)) / denominator;
+    hit.orig = ray.orig + ray.dir * hit.t;
+    hit.normal = n;
+    hit.mat = 1;
+
+    return hit;
+}
+
+Hit sphereInt(Sphere object, Ray ray) {
+		Hit hit;
+		hit.t = -1;
+		vec3 dist = ray.orig - object.center;
+		float a = dot(ray.dir, ray.dir);
+		float b = dot(dist, ray.dir) * 2.0f;
+		float c = dot(dist, dist) - object.radius * object.radius;
+		float discr = b * b - 4.0f * a * c;
+		if (discr < 0) return hit;
+		float sqrt_discr = sqrt(discr);
+		float t1 = (-b + sqrt_discr) / 2.0f / a;	// t1 >= t2 for sure
+		float t2 = (-b - sqrt_discr) / 2.0f / a;
+		if (t1 <= 0) return hit;
+		hit.t = (t2 > 0) ? t2 : t1;
+		hit.orig = ray.orig + ray.dir * hit.t;
+		hit.normal = (hit.orig - object.center) / object.radius;
+        hit.mat = 0;
+
+		return hit;
+}
+
+Hit box(const vec3 minP, const vec3 maxP, const Ray ray)
+{
+    Hit hit;
+    hit.t = -1;
+	vec3 diffMin = minP - ray.orig;
+	vec3 diffMax = maxP - ray.orig;
+	vec3 t0 = diffMin / ray.dir;
+	vec3 t1 = diffMax / ray.dir;
+	vec3 n = min(t0, t1);
+	vec3 f = max(t0, t1);
+	float enter = max(n.x, max(n.y, n.z));
+	float exit = min(f.x, min(f.y, f.z));
+	if(enter > exit) return hit;
+	if (0.0 < enter) hit.t = enter;
+	hit.t= exit;
+    hit.mat = 0;
+
+    return hit;
+}
 
 Hit firstIntersect(Ray ray){
+    Sphere sp;
+    sp.radius = 2;
+    sp.center = vec3(4,2,3);
+
     Hit besthit;
     besthit.t=-1;
     for (int i =0; i< indices.length(); i+=3){
@@ -111,62 +180,68 @@ Hit firstIntersect(Ray ray){
         vec3 N = vertices[indices[i]].normal.xyz;
         Hit hit=rayTriangleIntersect(ray, A, B, C, N);
 
-        if (hit.t>0 && (besthit.t>hit.t || besthit.t<0)){
+        if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
             besthit=hit;
         }
+        if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
 
     }
+    Hit hit = plane(vec3(0,1,0), 0, ray);
+
+    if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
+            besthit=hit;
+    }
+    if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
+
+    hit = sphereInt(sp, ray);
+    // Hit hit = box(vec3(3,3,3),vec3(4,4,4), ray);
+
+    if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
+            besthit=hit;
+    }
+    if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
+
     return besthit;
 }
 
-bool shadowIntersect(Ray ray){
-    for (int i =0; i< indices.length(); i+=3){
-        vec3 A=vertices[indices[i]].position.xyz;
-        vec3 B=vertices[indices[i+1]].position.xyz;
-        vec3 C=vertices[indices[i+2]].position.xyz;
-        vec3 N = vertices[indices[i]].normal.xyz;
-        Hit hit=rayTriangleIntersect(ray, A, B, C, N);
-
-        if (hit.t>0 ){
-            return true;
-        }
-    }
-    return false;
+vec3 Fresnel(vec3 F0, float cosTheta) { 
+		return F0 + (vec3(1, 1, 1) - F0) * pow(cosTheta, 5);
 }
 
 vec3 trace(Ray ray){
-    vec3 color= vec3(0.);
-    vec3 weight=vec3(1.);
+
+
+    vec3 outRadiance= vec3(0,0,0);
+    vec3 weight=vec3(1,1,1);
 
     vec3 ka= vec3(0.135, 0.2225, 0.1575); // material
     vec3 kd= vec3(0.54, 0.89, 0.63); // material
     vec3 ks= vec3(0.7, 0.89, 0.93); // material
 
 
-
-    for (int l=0; l<MAX_LIGHTHS; ++l)
-    {
-        Hit hit=firstIntersect(ray);
-        if (hit.t==-1){ return weight * lights[0].La; }
-
-
-        color += weight * lights[0].La * ka;
-        float cosTheta = dot(hit.normal, lights[0].position)/(length(hit.normal)*length(lights[0].position));
-
-        Ray shadowRay;
-        shadowRay.orig=hit.orig+hit.normal*0.0001f; //epsilon
-        shadowRay.dir=lights[0].position;
-
-        if (cosTheta > 0 && shadowIntersect(shadowRay)){
-            color += lights[0].Le * cosTheta * kd;
-            float cosDelta = dot(hit.normal, normalize(-ray.dir + lights[0].position));
-
-            if (cosDelta>0){
-                color=color+lights[0].Le*ks*pow(cosDelta, shininess);
+    for(int d = 0; d < DEPTH; d++) {
+        Hit hit = firstIntersect(ray);
+        if (hit.t < 0) return weight * lights[0].La;
+        if (hit.mat == 0) {
+            outRadiance += weight * ka * lights[0].La;
+            Ray shadowRay;
+            shadowRay.orig = hit.orig + hit.normal * 0.0001;
+            shadowRay.dir = lights[0].position;
+            float cosTheta = dot(hit.normal, lights[0].position);
+            if (cosTheta > 0 && !(firstIntersect(shadowRay).t > 0)) {
+                outRadiance += weight * lights[0].Le * kd * cosTheta;
+                vec3 halfway = normalize(-ray.dir + lights[0].position);
+                float cosDelta = dot(hit.normal, halfway);
+                if (cosDelta > 0) outRadiance += weight * lights[0].Le * ks * pow(cosDelta, shininess);
             }
         }
-        return color;
-    } 
+
+        if (hit.mat == 1) {
+            weight *= Fresnel(vec3(0.8,0.9,0.77), dot(-ray.dir, hit.normal));
+            ray.orig = hit.orig + hit.normal * 0.0001;
+            ray.dir = reflect(ray.dir, hit.normal);
+        } else return outRadiance;
+    }
 }
 
 
@@ -228,7 +303,7 @@ void main()
 // 	surfaceNormal = normalize( ( model * vec4(surfaceNormal, 0) ).xyz);
 
 // 	// egyszeru diffuz szin
-// 	vec3 toLight = normalize(lightPos - intersectionPoint);
+// 	vec3 toLight = normalize(lights[0]Pos - intersectionPoint);
 // 	vec4 diffuseColor = vec4(clamp( dot(surfaceNormal, toLight), 0, 1 ));
 
 // 	fs_out_col = diffuseColor + vec4(0.2f);
