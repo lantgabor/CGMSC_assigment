@@ -19,39 +19,6 @@ CMyApp::~CMyApp(void)
 {
 }
 
-
-GLuint CMyApp::GenTexture()
-{
-    unsigned char tex[256][256][3];
- 
-    for (int i=0; i<256; ++i)
-        for (int j=0; j<256; ++j)
-        {
-			tex[i][j][0] = rand()%256;
-			tex[i][j][1] = rand()%256;
-			tex[i][j][2] = rand()%256;
-        }
- 
-	GLuint tmpID;
-
-	// gener�ljunk egy text�ra er�forr�s nevet
-    glGenTextures(1, &tmpID);
-	// aktiv�ljuk a most gener�lt nev� text�r�t
-    glBindTexture(GL_TEXTURE_2D, tmpID);
-	// t�lts�k fel adatokkal az...
-    gluBuild2DMipmaps(  GL_TEXTURE_2D,	// akt�v 2D text�r�t
-						GL_RGB8,		// a v�r�s, z�ld �s k�k csatorn�kat 8-8 biten t�rolja a text�ra
-						256, 256,		// 256x256 m�ret� legyen
-						GL_RGB,				// a text�ra forr�sa RGB �rt�keket t�rol, ilyen sorrendben
-						GL_UNSIGNED_BYTE,	// egy-egy sz�nkopmonenst egy unsigned byte-r�l kell olvasni
-						tex);				// �s a text�ra adatait a rendszermem�ria ezen szeglet�b�l t�lts�k fel
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	// biline�ris sz�r�s kicsiny�t�skor
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	// �s nagy�t�skor is
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	return tmpID;
-}
-
 bool CMyApp::Init()
 {
 	glClearColor(0.2, 0.4, 0.7, 1);	// Clear color is bluish
@@ -86,7 +53,7 @@ bool CMyApp::Init()
 	// m_textureID = TextureFromFile("../res/texture.png");
 
 	// Loading mesh
-	m_mesh = ObjParser::parse("../res/teapot.obj", new Mesh());
+	m_mesh = ObjParser::parse("../res/suzanne.obj", new Mesh());
 
 	m_mesh->initUBO();
 	grid.addMesh(m_mesh);
@@ -132,6 +99,9 @@ void CMyApp::Render()
 			m_sphere_program.SetUniform("model",		sphere_world );
 			m_sphere_program.SetUniform("lights[0].position",		lightPos );
 			m_sphere_program.SetUniform("lights[0].Le",		Le );
+			m_sphere_program.SetUniform("lights[0].La",		La );
+			m_sphere_program.SetUniform("shininess", 	shininess );
+			m_sphere_program.SetUniform("translate", 	translate );
 			m_sphere_program.SetUniform("translate", 	translate );
 
 			m_quad_vb.Draw(GL_TRIANGLE_STRIP, 0, 4);
@@ -145,6 +115,7 @@ void CMyApp::Render()
 	{
 		ImGui::SliderFloat3("light_pos", &lightPos.x, -50.f, 50.f);
 		ImGui::SliderFloat3("Le", &Le.x, 0.f, 1.f);
+		ImGui::SliderFloat("shininess", &shininess, 0.1f, 55.f);
 		// ImGui::SliderFloat3("translate", &translate.x, -10.f, 10.f);
 	}
 	ImGui::End(); // In either case, ImGui::End() needs to be called for ImGui::Begin().

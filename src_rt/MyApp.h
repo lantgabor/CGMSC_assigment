@@ -52,8 +52,10 @@ protected:
 	Mesh			*m_mesh;
 	Grid			grid = Grid();
 
-	glm::vec3 lightPos = glm::vec3(-50,20,0);
-	glm::vec3 Le = glm::vec3(0.23,0.21,0.31);
+	glm::vec3 lightPos = glm::vec3(5,20,15);
+	glm::vec3 Le = glm::vec3(0.43,0.61,0.31);
+	glm::vec3 La = glm::vec3(0.45,0.43,0.64);
+	float shininess = 15;
 
 	glm::vec3 world = glm::vec3(0,0,0);
 	glm::vec3 translate = glm::vec3(0,0,0);

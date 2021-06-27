@@ -22,7 +22,7 @@ struct Ray{
 };
 
 struct Hit{
-    vec3 orig, dir, normal;
+    vec3 orig, normal;
     float t;
 };
 
@@ -33,6 +33,7 @@ uniform mat4 model;
 uniform mat4 view;
 
 uniform vec3 lightPos;
+uniform float shininess;
 uniform vec3 translate;
 
 uniform Light lights[MAX_LIGHTHS];
@@ -118,34 +119,55 @@ Hit firstIntersect(Ray ray){
     return besthit;
 }
 
+bool shadowIntersect(Ray ray){
+    for (int i =0; i< indices.length(); i+=3){
+        vec3 A=vertices[indices[i]].position.xyz;
+        vec3 B=vertices[indices[i+1]].position.xyz;
+        vec3 C=vertices[indices[i+2]].position.xyz;
+        vec3 N = vertices[indices[i]].normal.xyz;
+        Hit hit=rayTriangleIntersect(ray, A, B, C, N);
+
+        if (hit.t>0 ){
+            return true;
+        }
+    }
+    return false;
+}
+
 vec3 trace(Ray ray){
-    vec3 color= vec3(0, 0, 0);
+    vec3 color= vec3(0.);
+    vec3 weight=vec3(1.);
+
     vec3 ka= vec3(0.135, 0.2225, 0.1575); // material
     vec3 kd= vec3(0.54, 0.89, 0.63); // material
+    vec3 ks= vec3(0.7, 0.89, 0.93); // material
 
-    Light light;
-	light.La = vec3(0.2,0.2,0.2);
 
-    Hit hit=firstIntersect(ray);
 
-    if (hit.t==-1){ return light.La; }
+    for (int l=0; l<MAX_LIGHTHS; ++l)
+    {
+        Hit hit=firstIntersect(ray);
+        if (hit.t==-1){ return weight * lights[0].La; }
 
-    color=light.La*ka;
 
-// The below part is under contruction, but functions well.
-        Ray shadowRay;
-        shadowRay.orig=hit.orig+hit.normal*0.001f;
-        shadowRay.dir=lights[0].position;
+        color += weight * lights[0].La * ka;
         float cosTheta = dot(hit.normal, lights[0].position)/(length(hit.normal)*length(lights[0].position));
-        if (cosTheta > 0){
-            color+=lights[0].Le*cosTheta*kd;
-            float cosDelta=dot(hit.normal, normalize(-ray.dir + lights[0].position));
+
+        Ray shadowRay;
+        shadowRay.orig=hit.orig+hit.normal*0.0001f; //epsilon
+        shadowRay.dir=lights[0].position;
+
+        if (cosTheta > 0 && shadowIntersect(shadowRay)){
+            color += lights[0].Le * cosTheta * kd;
+            float cosDelta = dot(hit.normal, normalize(-ray.dir + lights[0].position));
+
             if (cosDelta>0){
-                color=color+lights[0].Le*vec3(0.316228, 0.316228, 0.316228)*pow(0.1, cosDelta);
+                color=color+lights[0].Le*ks*pow(cosDelta, shininess);
             }
         }
         return color;
-    }
+    } 
+}
 
 
 void main()
