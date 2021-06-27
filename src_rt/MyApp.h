@@ -45,8 +45,6 @@ protected:
 	GLuint m_textureID; // text�ra er�forr�s azonos�t�
 
 	gCamera			m_camera;
-	gShaderProgram	m_program;
-	gVertexBuffer	m_vb;
 
 	gShaderProgram	m_sphere_program;
 	gVertexBuffer	m_quad_vb;
@@ -54,7 +52,9 @@ protected:
 	Mesh			*m_mesh;
 	Grid			grid = Grid();
 
-	glm::vec3 lightPos = glm::vec3(0,20,0);
+	glm::vec3 lightPos = glm::vec3(-50,20,0);
+	glm::vec3 Le = glm::vec3(0.23,0.21,0.31);
+
 	glm::vec3 world = glm::vec3(0,0,0);
 	glm::vec3 translate = glm::vec3(0,0,0);
 };

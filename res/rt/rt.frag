@@ -1,50 +1,16 @@
 #version 460 core
 
+#define MAX_LIGHTHS 2
+
+in vec3 vs_out_pos;
+
+out vec4 fs_out_col;
 
 struct Vertex{
     vec4 position; // 16
     vec4 normal; // 32
     vec4 texcoord; // 48
 };
-
-layout (std430, binding=2) buffer ssbo_Vertices
-{
-    Vertex vertices[];
-};
-
-layout (std430, binding=3) buffer ssbo_Indices
-{
-    int indices[];
-};
-
-in vec3 vs_out_pos;
-
-out vec4 fs_out_col;
-
-uniform mat4 viewProj;
-uniform mat4 viewIprojI;
-uniform mat4 modelI;
-uniform mat4 model;
-uniform mat4 view;
-
-
-uniform vec3 lightPos;
-uniform vec3 translate;
-
-void getRay(in vec3 inVec, out vec3 rayOrig, out vec3 rayDir)
-{
-	// a vil�gKR-ben a kattint�snak a k�zeli v�g�s�kon megfeleltetett pont koordin�t�i
-	vec4 nearPt = viewIprojI * vec4(inVec.xy,-1, 1);
-	// a vil�gKR-ben a kattint�snak a t�voli v�g�s�kon megfeleltetett pont koordin�t�i
-	vec4 farPt  = viewIprojI * vec4(inVec.xy, 1, 1);
-
-	// induljon a sug�r a k�zeli v�gos�kr�
-	rayOrig = nearPt.xyz/nearPt.w;
-
-	// a sug�r ir�nya innen trivi
-	vec3 rayEnd = farPt.xyz/farPt.w;
-	rayDir  = normalize( rayEnd - rayOrig  );
-}
 
 struct Light{
     vec3 Le, La;
@@ -60,20 +26,51 @@ struct Hit{
     float t;
 };
 
-struct IntersectionPoint{
-    float t;
+uniform mat4 viewProj;
+uniform mat4 viewIprojI;
+uniform mat4 modelI;
+uniform mat4 model;
+uniform mat4 view;
 
+uniform vec3 lightPos;
+uniform vec3 translate;
+
+uniform Light lights[MAX_LIGHTHS];
+
+layout (std430, binding=2) buffer ssbo_Vertices
+{
+    Vertex vertices[];
 };
 
-Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
+layout (std430, binding=3) buffer ssbo_Indices
+{
+    int indices[];
+};
 
+
+void getRay(in vec3 inVec, out vec3 rayOrig, out vec3 rayDir)
+{
+	// points on the close plane
+	vec4 nearPt = viewIprojI * vec4(inVec.xy,-1, 1);
+	// points on the far plane
+	vec4 farPt  = viewIprojI * vec4(inVec.xy, 1, 1);
+
+	// start ray from the close plane
+	rayOrig = nearPt.xyz/nearPt.w;
+
+	// raydir
+	vec3 rayEnd = farPt.xyz/farPt.w;
+	rayDir  = normalize( rayEnd - rayOrig  );
+}
+
+Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
     Hit hit;
     float eps = 0.0001;
     float t; float u; float v;
-    vec3 v0v1 = v1 - v0; // edge 1
-    vec3 v0v2 = v2 - v0; // edge 2
-    vec3 pvec = cross(ray.dir, v0v2); // h
-    float det = dot(v0v1, pvec); // a
+    vec3 edge1 = v1 - v0; // edge 1
+    vec3 edge2 = v2 - v0; // edge 2
+    vec3 pvec = cross(ray.dir, edge2); // h
+    float det = dot(edge1, pvec); // a
 
 
     if (abs(det) < eps){ //parallel
@@ -82,21 +79,21 @@ Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
     }
     float invDet = 1 / det; // f
 
-    vec3 tvec = ray.orig - v0; // s
-    u = dot(tvec, pvec) * invDet; // u
+    vec3 s = ray.orig - v0; // s
+    u = dot(s, pvec) * invDet; // u
     if (u < 0 || u > 1){
         hit.t=-1;
         return hit;
     }
 
-    vec3 qvec = cross(tvec, v0v1); // q
-    v = dot(ray.dir, qvec) * invDet; // v
+    vec3 q = cross(s, edge1); // q
+    v = dot(ray.dir, q) * invDet; // v
     if (v < 0 || u + v > 1) {
         hit.t=-1;
         return hit;
     }
 
-    hit.t = dot(v0v2, qvec) * invDet; // t
+    hit.t = dot(edge2, q) * invDet; // t
     hit.normal= N; // normal
     return hit;
 }
@@ -123,13 +120,11 @@ Hit firstIntersect(Ray ray){
 
 vec3 trace(Ray ray){
     vec3 color= vec3(0, 0, 0);
-    vec3 ka= vec3(0.135, 0.2225, 0.1575);
-    vec3 kd= vec3(0.54, 0.89, 0.63);
+    vec3 ka= vec3(0.135, 0.2225, 0.1575); // material
+    vec3 kd= vec3(0.54, 0.89, 0.63); // material
 
     Light light;
-	light.Le = vec3(0.5,0.5,0.4);
-	light.La = vec3(0.42,0.33,0.38);
-    light.position = lightPos;
+	light.La = vec3(0.2,0.2,0.2);
 
     Hit hit=firstIntersect(ray);
 
@@ -140,13 +135,13 @@ vec3 trace(Ray ray){
 // The below part is under contruction, but functions well.
         Ray shadowRay;
         shadowRay.orig=hit.orig+hit.normal*0.001f;
-        shadowRay.dir=light.position;
-        float cosTheta = dot(hit.normal, light.position)/(length(hit.normal)*length(light.position));
+        shadowRay.dir=lights[0].position;
+        float cosTheta = dot(hit.normal, lights[0].position)/(length(hit.normal)*length(lights[0].position));
         if (cosTheta > 0){
-            color+=light.Le*cosTheta*kd;
-            float cosDelta=dot(hit.normal, normalize(-ray.dir + light.position));
+            color+=lights[0].Le*cosTheta*kd;
+            float cosDelta=dot(hit.normal, normalize(-ray.dir + lights[0].position));
             if (cosDelta>0){
-                color=color+light.Le*vec3(0.316228, 0.316228, 0.316228)*pow(0.1, cosDelta);
+                color=color+lights[0].Le*vec3(0.316228, 0.316228, 0.316228)*pow(0.1, cosDelta);
             }
         }
         return color;
