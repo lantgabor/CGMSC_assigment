@@ -72,7 +72,7 @@ void getRay(in vec3 inVec, out vec3 rayOrig, out vec3 rayDir)
 
 Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
     Hit hit;
-    float eps = 0.0001;
+    float eps = 0.00001;
     float t; float u; float v;
     vec3 edge1 = v1 - v0; // edge 1
     vec3 edge2 = v2 - v0; // edge 2
@@ -119,7 +119,7 @@ Hit plane(const vec3 n, const float d, const Ray ray)
 	hit.t = (-d-dot(n, ray.orig)) / denominator;
     hit.orig = ray.orig + ray.dir * hit.t;
     hit.normal = n;
-    hit.mat = 1;
+    hit.mat = 0;
 
     return hit;
 }
@@ -140,7 +140,7 @@ Hit sphereInt(Sphere object, Ray ray) {
 		hit.t = (t2 > 0) ? t2 : t1;
 		hit.orig = ray.orig + ray.dir * hit.t;
 		hit.normal = (hit.orig - object.center) / object.radius;
-        hit.mat = 0;
+        hit.mat = 1;
 
 		return hit;
 }
@@ -172,6 +172,37 @@ Hit firstIntersect(Ray ray){
 
     Hit besthit;
     besthit.t=-1;
+   
+    Hit hit = plane(vec3(0,1,0), 0.2, ray);
+
+    if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
+            besthit=hit;
+    }
+    if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
+
+    hit = sphereInt(sp, ray);
+
+    if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
+            besthit=hit;
+    }
+    if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
+
+    sp.center = vec3(-6,2,-4);
+
+    hit = sphereInt(sp, ray);
+
+    if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
+            besthit=hit;
+    }
+    if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
+
+    // hit = box(vec3(-3,1,-6),vec3(-5,4,-7), ray);
+
+    // if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
+    //         besthit=hit;
+    // }
+    // if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
+
     for (int i =0; i< indices.length(); i+=3){
 
         vec3 A=vertices[indices[i]].position.xyz;
@@ -186,20 +217,6 @@ Hit firstIntersect(Ray ray){
         if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
 
     }
-    Hit hit = plane(vec3(0,1,0), 0, ray);
-
-    if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
-            besthit=hit;
-    }
-    if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
-
-    hit = sphereInt(sp, ray);
-    // Hit hit = box(vec3(3,3,3),vec3(4,4,4), ray);
-
-    if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
-            besthit=hit;
-    }
-    if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
 
     return besthit;
 }
