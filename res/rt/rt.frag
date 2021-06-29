@@ -1,7 +1,7 @@
 #version 460 core
 
-#define MAX_LIGHTHS 2
-#define DEPTH 2
+#define MAX_LIGHTS 1
+#define DEPTH 5
 
 in vec3 vs_out_pos;
 
@@ -13,6 +13,14 @@ struct Vertex{
     vec4 texcoord; // 48
 };
 
+struct Material{
+    vec3 ka, kd, ks;
+    float shininess;
+    vec3 F0;
+    float n; // IOR
+    int type;
+};
+
 struct Light{
     vec3 Le, La;
     vec3 position;
@@ -20,6 +28,9 @@ struct Light{
 
 struct Ray{
     vec3 orig, dir;
+    vec3 weight;
+    bool outside;
+    int depth;
 };
 
 struct Hit{
@@ -38,7 +49,8 @@ uniform vec3 lightPos;
 uniform float shininess;
 uniform vec3 translate;
 
-uniform Light lights[MAX_LIGHTHS];
+uniform Light lights[MAX_LIGHTS];
+uniform Material materials[3];
 
 layout (std430, binding=2) buffer ssbo_Vertices
 {
@@ -101,8 +113,8 @@ Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
     }
 
     hit.t = dot(edge2, q) * invDet; // t
-    hit.normal=  N; // normal // cross(edge1, edge2); //
-    hit.mat = 0;
+    hit.normal= cross(edge1, edge2); //  N; // normal // cross(edge1, edge2); //
+    hit.mat = 2;
     return hit;
 }
 
@@ -140,7 +152,7 @@ Hit sphereInt(Sphere object, Ray ray) {
 		hit.t = (t2 > 0) ? t2 : t1;
 		hit.orig = ray.orig + ray.dir * hit.t;
 		hit.normal = (hit.orig - object.center) / object.radius;
-        hit.mat = 1;
+        hit.mat = 0;
 
 		return hit;
 }
@@ -196,13 +208,6 @@ Hit firstIntersect(Ray ray){
     }
     if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
 
-    // hit = box(vec3(-3,1,-6),vec3(-5,4,-7), ray);
-
-    // if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
-    //         besthit=hit;
-    // }
-    // if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
-
     for (int i =0; i< indices.length(); i+=3){
 
         vec3 A=vertices[indices[i]].position.xyz;
@@ -214,53 +219,146 @@ Hit firstIntersect(Ray ray){
         if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
             besthit=hit;
         }
-        if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
+        //if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
 
     }
 
     return besthit;
 }
 
+bool shadowIntersect(Ray ray) {
+    Sphere sp;
+    sp.radius = 2;
+    sp.center = vec3(4,2,3);
+
+    if (sphereInt(sp, ray).t > 0) return true; //  hit.t < 0 if no intersection
+    return false;
+}
+
 vec3 Fresnel(vec3 F0, float cosTheta) { 
 		return F0 + (vec3(1, 1, 1) - F0) * pow(cosTheta, 5);
 }
 
-vec3 trace(Ray ray){
+const int maxdepth = 5;
+const int stackSize = 1 << maxdepth; // TODO remove bit shift
 
+struct Stack {
+    Ray rays[stackSize];
+    int sp;
+};
 
-    vec3 outRadiance= vec3(0,0,0);
-    vec3 weight=vec3(1,1,1);
+const float epsilon = 0.0001; // TODO move to top
 
-    vec3 ka= vec3(0.135, 0.2225, 0.1575); // material
-    vec3 kd= vec3(0.54, 0.89, 0.63); // material
-    vec3 ks= vec3(0.7, 0.89, 0.93); // material
-
-
-    for(int d = 0; d < DEPTH; d++) {
-        Hit hit = firstIntersect(ray);
-        if (hit.t < 0) return weight * lights[0].La;
-        if (hit.mat == 0) {
-            outRadiance += weight * ka * lights[0].La;
-            Ray shadowRay;
-            shadowRay.orig = hit.orig + hit.normal * 0.0001;
-            shadowRay.dir = lights[0].position;
-            float cosTheta = dot(hit.normal, lights[0].position);
-            if (cosTheta > 0 && !(firstIntersect(shadowRay).t > 0)) {
-                outRadiance += weight * lights[0].Le * kd * cosTheta;
-                vec3 halfway = normalize(-ray.dir + lights[0].position);
-                float cosDelta = dot(hit.normal, halfway);
-                if (cosDelta > 0) outRadiance += weight * lights[0].Le * ks * pow(cosDelta, shininess);
-            }
-        }
-
-        if (hit.mat == 1) {
-            weight *= Fresnel(vec3(0.8,0.9,0.77), dot(-ray.dir, hit.normal));
-            ray.orig = hit.orig + hit.normal * 0.0001;
-            ray.dir = reflect(ray.dir, hit.normal);
-        } else return outRadiance;
-    }
+vec3 refr(vec3 incomingRayDirection, vec3 normal) {
+    float ior = 1/5;
+    float cosa = (dot(normal, incomingRayDirection)) * -1.0;
+    if (cosa < 0) {
+         cosa = -cosa; 
+         normal = normal*-1.0;
+          ior = 1/5; 
+          }
+    float disc = 1 - (1 - cosa * cosa)/ior/ior;
+    if (disc < 0) return reflect(incomingRayDirection, normal);
+    return incomingRayDirection/ior + normal * (cosa/ior - sqrt(disc));
 }
 
+vec3 trace(Ray ray){
+    vec3 outRadiance= vec3(0,0,0);
+    vec3 weight=vec3(1,1,1); // TODO remove
+
+    Stack stack;
+    stack.sp = 0;
+    stack.rays[stack.sp++] = ray; // TODO move PUSH to function
+
+    vec3 ka= vec3(0.135, 0.2225, 0.1575); // material
+    vec3 ks= vec3(0.7, 0.89, 0.93); // material
+    vec3 kd= vec3(0.54, 0.89, 0.63); // material
+
+   		// while( stack.sp > 0 ) {
+		for(int e = 0; e < stackSize; e++) {
+	        if ( stack.sp == 0 ) return outRadiance;
+			ray = stack.rays[--stack.sp];
+			
+			// while(ray.depth < maxdepth) {
+			for(int d = 0; d < maxdepth; d++) {
+				if (ray.depth >= maxdepth) break;
+
+				Hit hit = firstIntersect(ray);
+				if (hit.t <= 0) {
+					outRadiance += ray.weight; // * La; TODO
+					break;
+				}
+
+				// rough surface, direct illumination
+				if (hit.mat == 0) {
+					outRadiance += ray.weight * ka; // * La; TODO
+
+					for(int l=0; l < MAX_LIGHTS; l++) {
+						Ray shadowRay;
+						shadowRay.orig = hit.orig + hit.normal * epsilon;
+						shadowRay.dir = lights[l].position;
+						float cosTheta = dot(hit.normal, lights[l].position);
+						if (cosTheta > 0 && !shadowIntersect(shadowRay)) {
+							outRadiance += ray.weight * lights[l].Le * kd * cosTheta;
+							vec3 halfway = normalize(-ray.dir + lights[l].position);
+							float cosDelta = dot(hit.normal, halfway);
+							if (cosDelta > 0) outRadiance += ray.weight * lights[l].Le * ks * pow(cosDelta, shininess);
+						}
+					}
+					break;
+				}
+
+				// refraction, postpone it
+				if (hit.mat == 1) {
+					Ray refractRay;
+					refractRay.orig = hit.orig - hit.normal * epsilon;
+					refractRay.dir = refract(ray.dir, hit.normal, (ray.outside) ?  1.1 /* materials[hit.mat].n */ : 1.0f /  1.1 /* materials[hit.mat].n */); // TODO
+					refractRay.depth = ray.depth + 1;
+					if (refractRay.depth < maxdepth && length(refractRay.dir) > 0) {
+						refractRay.weight = ray.weight * (vec3(1, 1, 1) - Fresnel( vec3(0.3725, 0.1961, 0.1961) /* materials[hit.mat].F0 */, dot(-ray.dir, hit.normal)));
+						refractRay.outside = !ray.outside;
+						stack.rays[stack.sp++] = refractRay;	// push
+					}
+				}
+
+				// reflection
+				ray.weight *= Fresnel(vec3(0.4,0.44,0.37) /* materials[hit.mat].F0 */, dot(-ray.dir, hit.normal));
+				ray.orig = hit.orig + hit.normal * epsilon;
+				ray.dir = reflect(ray.dir, hit.normal);
+				ray.depth++;
+			}
+		}
+		return outRadiance;
+
+
+    // for(int d = 0; d < DEPTH; d++) {
+    //     Hit hit = firstIntersect(ray);
+
+    //     if (hit.t < 0) return weight * lights[0].La;
+    //     if (hit.mat == 0) {
+    //         outRadiance += weight * ka * lights[0].La;
+    //         Ray shadowRay;
+    //         shadowRay.orig = hit.orig + hit.normal * 0.0001;
+    //         shadowRay.dir = lights[0].position;
+    //         float cosTheta = dot(hit.normal, lights[0].position);
+    //         if (cosTheta > 0 && !(shadowIntersect(shadowRay)) ) {
+    //             outRadiance += weight * lights[0].Le * kd * cosTheta;
+    //             vec3 halfway = normalize(-ray.dir + lights[0].position);
+    //             float cosDelta = dot(hit.normal, halfway);
+    //             if (cosDelta > 0) outRadiance += weight * lights[0].Le * ks * pow(cosDelta, shininess);
+    //         }
+    //     }
+
+    //     if (hit.mat == 1) {
+    //         // weight *= Fresnel(vec3(0.8,0.9,0.77), dot(-ray.dir, hit.normal));
+    //         // ray.orig = hit.orig + hit.normal * 0.0001;
+    //         // ray.dir = reflect(ray.dir, hit.normal);
+    //         weight *= vec3(1,1,1) - Fresnel(vec3(0.4,0.44,0.37), dot(-ray.dir, hit.normal));
+    //         ray.orig = hit.orig - hit.normal * 0.0001;
+    //         ray.dir = refr(normalize(ray.dir), hit.normal);
+    //     } else return outRadiance;
+    // }
+}
 
 void main()
 {
@@ -273,66 +371,9 @@ void main()
 
     ray.orig = rayOrig;
     ray.dir = rayDir;
+    ray.weight = vec3(1, 1, 1);
+    ray.outside = false;
+    ray.depth = 0;
+
     fs_out_col = vec4(trace(ray), 1);
 }
-
-// void main()
-// {
-// 	vec3 rayOrig, rayDir;
-
-// 	getRay(vs_out_pos, rayOrig, rayDir);
-
-// 	rayOrig = (modelI * vec4(rayOrig, 1) ).xyz;
-// 	rayDir  = (modelI * vec4(rayDir,  0) ).xyz;
-
-// 	// masodfoku egyenlet eh-i
-// 	float A = dot(rayDir,rayDir); // kell ez?
-// 	float B = 2*dot(rayDir, rayOrig - center);
-// 	float C = dot( rayOrig - center, rayOrig - center) - r*r;
-
-// 	// oldjuk is meg
-// 	float discr = B*B - 4*A*C;
-
-// 	if ( discr < 0)
-// 	{
-// 		// nincs mp
-// 		discard;
-// 	}
-
-// 	// gyokok
-// 	float t1 = (-B - sqrt(discr))/(2*A);
-// 	float t2 = (-B + sqrt(discr))/(2*A);
-
-// 	float t = t1;
-
-// 	if ( t1 < 0 )
-// 		t = t2;
-
-// 	// ha mogottunk van a metszespont, akkor dobjuk el a fragmentet
-// 	if ( t < 0 )
-// 		discard;
-
-// 	// k�l�nben sz�m�tsuk ki a metsz�spontot
-// 	vec3 intersectionPoint = rayOrig + t*rayDir;
-// 	vec3 surfaceNormal = normalize(intersectionPoint - center);
-
-// 	intersectionPoint = (model * vec4(intersectionPoint, 1) ).xyz;
-// 	surfaceNormal = normalize( ( model * vec4(surfaceNormal, 0) ).xyz);
-
-// 	// egyszeru diffuz szin
-// 	vec3 toLight = normalize(lights[0]Pos - intersectionPoint);
-// 	vec4 diffuseColor = vec4(clamp( dot(surfaceNormal, toLight), 0, 1 ));
-
-// 	fs_out_col = diffuseColor + vec4(0.2f);
-
-// 	// viewport transzform�ci�: http://www.songho.ca/opengl/gl_transform.html 
-// 	// gl_DepthRange: http://www.opengl.org/registry/doc/GLSLangSpec.4.30.6.pdf , 130.o. 
-// 	vec4 clipPos = viewProj * vec4( intersectionPoint, 1 );
-
-// 	float zndc = clipPos.z / clipPos.w; 
-
-// 	float n = gl_DepthRange.near;
-// 	float f = gl_DepthRange.far;
-
-// 	gl_FragDepth = (f-n)/2 * zndc + (f+n)/2;
-// }

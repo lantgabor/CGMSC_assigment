@@ -14,7 +14,7 @@
       "presentation": {
         "clear": true,
         "showReuseMessage": false,
-        // "close": true
+        "close": true
       }
     },
     {
@@ -22,7 +22,7 @@
       "type": "shell",
       "presentation": {
         "reveal": "silent",
-        "clear": true,
+        "clear": true
       },
       "command": "./run.bat"
     }
