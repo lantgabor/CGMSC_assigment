@@ -33,7 +33,7 @@ void Mesh::initBuffers()
 }
 
 
-void Mesh::initUBO()
+void Mesh::initSSBO()
 {
 
 	glGenBuffers(1, &ssbo_Vertices);
@@ -49,25 +49,6 @@ void Mesh::initUBO()
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(unsigned int) * indices.size(), (void*)&indices[0], GL_STATIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_Indices);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-	// glGenBuffers(1, &ubo_Mesh);
-	// glBindBuffer(GL_UNIFORM_BUFFER, ubo_Mesh);
-	// glBufferData(GL_UNIFORM_BUFFER, 16 * 3 * 500 + 16* 500, NULL, GL_STATIC_DRAW); // vec3 * 3 aligned to 16
-	
-	// for (int i=0; i<vertices.size(); ++i)
-	// {
-	// 	Vertex v = vertices[i];
-	// 	glBufferSubData(GL_UNIFORM_BUFFER, 16 * 3 * i, 16 + 16 + 8, &v);
-	// }
-
-	// for (int j=0; j<indices.size(); ++j)
-	// {
-	// 	int idx = indices[j];
-	// 	glBufferSubData(GL_UNIFORM_BUFFER, 16 * 3 * 500 + (16 * j), 4, &idx);
-	// }
-
-	// glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	// glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo_Mesh);
 
 }
 

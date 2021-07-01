@@ -1,8 +1,9 @@
 #version 460 core
 
-#define MAX_LIGHTS 1
+#define MAX_LIGHTS 2
 #define DEPTH 5
-const float epsilon = 0.0001; // TODO move to top
+#define MAX_MATERIALS 9
+const float epsilon = 0.0001;
 
 in vec3 vs_out_pos;
 
@@ -11,7 +12,7 @@ out vec4 fs_out_col;
 struct Vertex{
     vec4 position; // 16
     vec4 normal; // 32
-    vec4 texcoord; // 48
+    vec4 texcoord; // 48 
 };
 
 struct Material{
@@ -39,7 +40,17 @@ struct Hit{
     float t;
     int mat;
 };
-uniform samplerCube cubemap; // cubemap texture sampler
+
+struct Sphere {
+    vec3 center;
+    float radius;
+};
+
+uniform Sphere spheres[13];
+uniform Light lights[MAX_LIGHTS];
+uniform Material materials[MAX_MATERIALS];
+
+uniform samplerCube cubemap; // skybox texture sampler
 
 uniform mat4 viewProj;
 uniform mat4 viewIprojI;
@@ -48,13 +59,7 @@ uniform mat4 model;
 uniform mat4 view;
 
 uniform vec3 lightPos;
-uniform float shininess;
 uniform vec3 La;
-uniform vec3 translate;
-
-
-uniform Light lights[MAX_LIGHTS];
-uniform Material materials[4];
 
 layout (std430, binding=2) buffer ssbo_Vertices
 {
@@ -66,10 +71,7 @@ layout (std430, binding=3) buffer ssbo_Indices
     int indices[];
 };
 
-struct Sphere {
-    vec3 center;
-    float radius;
-};
+
 
 void getRay(in vec3 inVec, out vec3 rayOrig, out vec3 rayDir)
 {
@@ -94,7 +96,9 @@ Hit rayTriangleIntersect(Ray ray, vec3 v0, vec3 v1, vec3 v2, vec3 N){
     vec3 pvec = cross(ray.dir, edge2); // h
     float det = dot(edge1, pvec); // a
 
-    if (det < epsilon){ //parallel
+    // if the determinant is negative the triangle is backfacing
+    // if the determinant is close to 0, the ray misses the triangle
+    if (det < epsilon){
         hit.t=-1;
         return hit;
     }
@@ -163,7 +167,7 @@ Hit firstIntersect(Ray ray){
     Hit besthit;
     besthit.t=-1;
    
-    Hit hit = plane(vec3(0,1,0), 0.2, ray);
+    Hit hit = plane(vec3(0,1,0), 0, ray);
 
     if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
             hit.mat = 3;
@@ -179,15 +183,14 @@ Hit firstIntersect(Ray ray){
     }
     if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
 
-    sp.center = vec3(-6,2,-4);
-
-    hit = sphereInt(sp, ray);
-
-    if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
-            hit.mat = 2;
+    for (int i=0; i<spheres.length(); ++i){
+        hit = sphereInt(spheres[i], ray);
+        if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
+            hit.mat = i % MAX_MATERIALS;
             besthit=hit;
+        }
+        if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
     }
-    if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
 
     for (int i =0; i< indices.length(); i+=3){
 
@@ -213,131 +216,85 @@ vec3 Fresnel(vec3 F0, float cosTheta) {
 		return F0 + (vec3(1, 1, 1) - F0) * pow(cosTheta, 5);
 }
 
-const int maxdepth = 5;
-const int stackSize = 5; // TODO remove bit shift
-
 struct Stack {
-    Ray rays[stackSize];
-    int sp;
+    Ray rays[DEPTH];
+    int siz;
 };
-
-vec3 refr(vec3 incomingRayDirection, vec3 normal) {
-    float ior = 1/5;
-    float cosa = (dot(normal, incomingRayDirection)) * -1.0;
-    if (cosa < 0) {
-         cosa = -cosa; 
-         normal = normal*-1.0;
-          ior = 1/5; 
-          }
-    float disc = 1 - (1 - cosa * cosa)/ior/ior;
-    if (disc < 0) return reflect(incomingRayDirection, normal);
-    return incomingRayDirection/ior + normal * (cosa/ior - sqrt(disc));
-}
 
 vec3 trace(Ray ray){
     vec3 outRadiance= vec3(0,0,0);
 
     Stack stack;
-    stack.sp = 0;
-    stack.rays[stack.sp++] = ray; // TODO move PUSH to function
+    stack.siz = 0;
+    stack.rays[stack.siz++] = ray; // move first ray to stack
 
-   		// while( stack.sp > 0 ) {
-		for(int e = 0; e < stackSize; e++) {
-	        if ( stack.sp == 0 ) return outRadiance;
-			ray = stack.rays[--stack.sp];
+   		while( stack.siz > 0 ) { // while the stack is not empty
+	        if ( stack.siz == 0 ) return outRadiance; // if empty return with radiance
+			ray = stack.rays[--stack.siz]; // pop ray from stack
 			
-			// while(ray.depth < maxdepth) {
-			for(int d = 0; d < maxdepth; d++) {
-				if (ray.depth >= maxdepth) break;
+			while(ray.depth < DEPTH) { // recursion loop
+				if (ray.depth >= DEPTH) break;
 
 				Hit hit = firstIntersect(ray);
-				if (hit.t <= 0) {
-					outRadiance += ray.weight * vec3(texture(cubemap, ray.dir).xyz);
+				if (hit.t <= 0) { // return sky
+					outRadiance += ray.weight * vec3(texture(cubemap, ray.dir).xyz); 
 					break;
 				}
 
-				// rough surface, direct illumination
+                /* ROUGH MATERIAL */
 				if (materials[hit.mat].type == 0) {
 					outRadiance += ray.weight * materials[hit.mat].ka * La;
 
 					for(int l=0; l < MAX_LIGHTS; l++) {
+						float cosTheta = dot(hit.normal, lights[l].position);
+
 						Ray shadowRay;
 						shadowRay.orig = hit.orig + hit.normal * epsilon;
 						shadowRay.dir = lights[l].position;
-						float cosTheta = dot(hit.normal, lights[l].position);
+                        /* SHADOW RAY */
 						if (cosTheta > 0 && !(firstIntersect(shadowRay).t > 0)) {
 							outRadiance += ray.weight * lights[l].Le * materials[hit.mat].kd * cosTheta;
 							vec3 halfway = normalize(-ray.dir + lights[l].position);
 							float cosDelta = dot(hit.normal, halfway);
-							if (cosDelta > 0) outRadiance += ray.weight * lights[l].Le * materials[hit.mat].ks * pow(cosDelta, materials[hit.mat].shininess);
+                            /* SPECULAR */
+                            if (cosDelta > 0) {
+                                outRadiance += ray.weight * lights[l].Le * materials[hit.mat].ks * pow(cosDelta, materials[hit.mat].shininess);
+                            } 
 						}
 					}
-					break;
+					break; // return no reflection
 				}
 
-				// refraction, postpone it // TODO remove 
+				/* REFRACTIVE MATERIAL */
 				if (materials[hit.mat].type == 1) {
-					Ray refractRay;
-					refractRay.orig = hit.orig - hit.normal * epsilon;
-					refractRay.dir = refract(ray.dir, hit.normal, (ray.outside) ? materials[hit.mat].n : 1.0f / materials[hit.mat].n);
-					refractRay.depth = ray.depth + 1;
-					if (refractRay.depth < maxdepth && length(refractRay.dir) > 0) {
-						refractRay.weight = ray.weight * (vec3(1, 1, 1) - Fresnel(  materials[hit.mat].F0 , dot(-ray.dir, hit.normal)));
-						refractRay.outside = !ray.outside;
-						stack.rays[stack.sp++] = refractRay;	// push
+					Ray rRay;
+					rRay.orig = hit.orig - hit.normal * epsilon;
+					rRay.dir = refract(ray.dir, hit.normal, ray.outside ? materials[hit.mat].n : 1.0f / materials[hit.mat].n);
+					rRay.depth = ray.depth + 1;
+					if (rRay.depth < DEPTH && length(rRay.dir) > 0) {
+						rRay.weight = ray.weight * (vec3(1, 1, 1) - Fresnel(  materials[hit.mat].F0 , dot(-ray.dir, hit.normal)));
+						rRay.outside = !ray.outside;
+						stack.rays[stack.siz++] = rRay;	// push
 					}
 				}
 
-				// reflection
+				/* REFLECTIVE MATERIAL */
 				ray.weight *= Fresnel( materials[hit.mat].F0, dot(-ray.dir, hit.normal));
 				ray.orig = hit.orig + hit.normal * epsilon;
 				ray.dir = reflect(ray.dir, hit.normal);
+                
 				ray.depth++;
 			}
 		}
 		return outRadiance;
-
-
-    // for(int d = 0; d < DEPTH; d++) {
-    //     Hit hit = firstIntersect(ray);
-
-    //     if (hit.t < 0) return weight * lights[0].La;
-    //     if (hit.mat == 0) {
-    //         outRadiance += weight * ka * lights[0].La;
-    //         Ray shadowRay;
-    //         shadowRay.orig = hit.orig + hit.normal * 0.0001;
-    //         shadowRay.dir = lights[0].position;
-    //         float cosTheta = dot(hit.normal, lights[0].position);
-    //         if (cosTheta > 0 && !(shadowIntersect(shadowRay)) ) {
-    //             outRadiance += weight * lights[0].Le * kd * cosTheta;
-    //             vec3 halfway = normalize(-ray.dir + lights[0].position);
-    //             float cosDelta = dot(hit.normal, halfway);
-    //             if (cosDelta > 0) outRadiance += weight * lights[0].Le * ks * pow(cosDelta, shininess);
-    //         }
-    //     }
-
-    //     if (hit.mat == 1) {
-    //         // weight *= Fresnel(vec3(0.8,0.9,0.77), dot(-ray.dir, hit.normal));
-    //         // ray.orig = hit.orig + hit.normal * 0.0001;
-    //         // ray.dir = reflect(ray.dir, hit.normal);
-    //         weight *= vec3(1,1,1) - Fresnel(vec3(0.4,0.44,0.37), dot(-ray.dir, hit.normal));
-    //         ray.orig = hit.orig - hit.normal * 0.0001;
-    //         ray.dir = refr(normalize(ray.dir), hit.normal);
-    //     } else return outRadiance;
-    // }
 }
 
 void main()
 {
 	
     Ray ray;
+	getRay(vs_out_pos, ray.orig, ray.dir);
 
-	vec3 rayOrig, rayDir;
-
-	getRay(vs_out_pos, rayOrig, rayDir);
-
-    ray.orig = rayOrig;
-    ray.dir = rayDir;
     ray.weight = vec3(1, 1, 1);
     ray.outside = false;
     ray.depth = 0;

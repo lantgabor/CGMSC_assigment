@@ -182,3 +182,30 @@ void TextureFromFileCube(const char* filename, GLuint role) {
 
 	SDL_FreeSurface(loaded_img);
 }
+
+GLuint AttachSkyboxCube(){
+
+	GLuint m_skyboxID;
+
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+	glGenTextures(1, &m_skyboxID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyboxID);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	TextureFromFileCube("../res/rt/skybox/xpos.png", GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+	TextureFromFileCube("../res/rt/skybox/xneg.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
+	TextureFromFileCube("../res/rt/skybox/ypos.png", GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
+	TextureFromFileCube("../res/rt/skybox/yneg.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_Y);
+	TextureFromFileCube("../res/rt/skybox/zpos.png", GL_TEXTURE_CUBE_MAP_POSITIVE_Z);
+	TextureFromFileCube("../res/rt/skybox/zneg.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+	return m_skyboxID;
+}

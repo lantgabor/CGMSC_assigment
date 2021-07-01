@@ -15,6 +15,7 @@
 #include "imgui/imgui_impl_sdl.h"
 #include "imgui/imgui_impl_opengl3.h"
 
+#include "time.h"
 
 void exitProgram()
 {
@@ -23,8 +24,8 @@ void exitProgram()
 
 int main( int argc, char* args[] )
 {
+	srand (time(NULL));
 	atexit( exitProgram );
-
 
 	if (SDL_Init(SDL_INIT_VIDEO) == -1)
 	{

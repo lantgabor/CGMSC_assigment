@@ -12,6 +12,7 @@
 
 #include "Material.h"
 #include "Light.h"
+#include "Sphere.h"
 
 class gShaderProgram
 {
@@ -43,7 +44,8 @@ public:
 	void SetTexture(const char* _uniform, int _sampler, GLuint _textureID);
 	void SetCubeTexture(const char* _uniform, int _sampler, GLuint _textureID);
 	void SetUniformMaterials(const std::vector<Material*>& _materials);
-	void SetUniformLights(const std::vector<Light*>& _lights); 
+	void SetUniformLights(const std::vector<Light*>& _lights);
+	void SetUniformSpheres(const std::vector<Sphere*>& _spheres);
 protected:
 	GLuint	getLocation(const char* _uniform);
 	GLuint	loadShader(GLenum _shaderType, const char* _fileName);

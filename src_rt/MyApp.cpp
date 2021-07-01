@@ -7,6 +7,10 @@
 #include "ObjParser_OGL3.h"
 #include "imgui/imgui.h"
 
+float rand_FloatRange(float a, float b)
+{
+    return ((b - a) * ((float)rand() / RAND_MAX)) + a;
+}
 
 CMyApp::CMyApp(void)
 {
@@ -50,44 +54,59 @@ bool CMyApp::Init()
 	// Camera
 	m_camera.SetProj(45.0f, 640.0f/480.0f, 0.01f, 1000.0f);
 
-
 	//Materials http://www.it.hiof.no/~borres/j3d/explain/light/p-materials.html
 	materials.push_back(new Rough(glm::vec3(0.1, 0.2, 0.3), glm::vec3(10, 10, 10), 155 ));
 	materials.push_back(new Glass(glm::vec3(0.1, 0.13, 0.15), 1.2 ));
-	materials.push_back(new Metal(glm::vec3(0.797357f, 0.723991f, 0.208006f)));
+	materials.push_back(new Metal(glm::vec3(0.797357, 0.623991, 0.308006)));
 	materials.push_back(new Rough(glm::vec3(0.1, 0.1, 0.1), glm::vec3(2, 2, 2), 124 ));
-	
+	materials.push_back(new Rough(glm::vec3(0.3, 0.2, 0.1), glm::vec3(5, 5, 2), 77 ));
+	materials.push_back(new Metal(glm::vec3(0.46621, 0.43152, 0.45414)));
+	materials.push_back(new Glass(glm::vec3(0.1, 0.33, 0.15), 2.2 ));
+	materials.push_back(new Glass(glm::vec3(0.3, 0.13, 0.15), 1.7 ));
+	materials.push_back(new Rough(glm::vec3(0.4, 0.2, 0.4), glm::vec3(2, 5, 3), 32 ));
+
 	//Lights
-	lights.push_back(new Light(lightPos, glm::vec3(5,5,5)));
+	lights.push_back(new Light(lightPos, glm::vec3(1.1,1.2,1.3)));
+	lights.push_back(new Light(glm::vec3(-5,5,5), glm::vec3(1.5,1.2,1.2)));
+
+	//Spheres
+	spheres.push_back(new Sphere(glm::vec3(-4,2,-3), 2));
+	float r = 0;
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) + 2, r, rand_FloatRange(-25,25) + 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) - 2, r, rand_FloatRange(-25,25) - 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) + 2, r, rand_FloatRange(-25,25) - 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) - 2, r, rand_FloatRange(-25,25) - 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) - 2, r, rand_FloatRange(-25,25) + 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) - 2, r, rand_FloatRange(-25,25) - 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) + 2, r, rand_FloatRange(-25,25) + 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) - 2, r, rand_FloatRange(-25,25) - 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) + 2, r, rand_FloatRange(-25,25) - 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) - 2, r, rand_FloatRange(-25,25) - 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) - 2, r, rand_FloatRange(-25,25) + 2), r));
+	r = rand_FloatRange(0.5,2.2);
+	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) + 2, r, rand_FloatRange(-25,25) - 2), r));
 
 	// Loading texture
 	//m_textureID = TextureFromFile("../res/texture.png");
 
-	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-	glGenTextures(1, &m_skyboxID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyboxID);
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-	TextureFromFileCube("../res/rt/skybox/xpos.png", GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-	TextureFromFileCube("../res/rt/skybox/xneg.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
-	TextureFromFileCube("../res/rt/skybox/ypos.png", GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
-	TextureFromFileCube("../res/rt/skybox/yneg.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_Y);
-	TextureFromFileCube("../res/rt/skybox/zpos.png", GL_TEXTURE_CUBE_MAP_POSITIVE_Z);
-	TextureFromFileCube("../res/rt/skybox/zneg.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
-
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	m_skyboxID = AttachSkyboxCube();
 
 	// Loading mesh
-	m_mesh = ObjParser::parse("../res/teapot.obj", new Mesh());
+	m_mesh = ObjParser::parse("../res/cube.obj", new Mesh());
 
-	m_mesh->initUBO();
-	grid.addMesh(m_mesh);
+	m_mesh->initSSBO();
+	// grid.addMesh(m_mesh);
 	// m_mesh->initBuffers();
 
 	return true;
@@ -132,12 +151,14 @@ void CMyApp::Render()
 			m_sphere_program.SetUniform("modelI",		glm::inverse(sphere_world) );
 			m_sphere_program.SetUniform("model",		sphere_world );
 			m_sphere_program.SetUniform("La",		La );
-			m_sphere_program.SetUniform("shininess", 	shininess );
 
 
 			m_sphere_program.SetUniformLights(lights);
 			m_sphere_program.SetUniformMaterials(materials);
+			m_sphere_program.SetUniformSpheres(spheres);
+
 			m_sphere_program.SetUniform("lights[0].position",		lightPos );
+			m_sphere_program.SetUniform("materials[0].shininess", 	shininess );
 
 			m_quad_vb.Draw(GL_TRIANGLE_STRIP, 0, 4);
 

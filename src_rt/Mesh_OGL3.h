@@ -19,7 +19,7 @@ public:
 	~Mesh(void);
 
 	void initBuffers();
-	void initUBO();
+	void initSSBO();
 	void draw();
 
 	void addVertex(const Vertex& vertex) {

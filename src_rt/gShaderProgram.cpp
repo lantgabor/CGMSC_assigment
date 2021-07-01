@@ -291,3 +291,14 @@ void gShaderProgram::SetUniformLights(const std::vector<Light*>& _lights){
 		SetUniform(name, _lights[l]->position);
 	}
 }
+
+void gShaderProgram::SetUniformSpheres(const std::vector<Sphere*>& _spheres){
+	char name[256];
+	for (int l = 0; l < _spheres.size(); l++) {
+		sprintf(name, "spheres[%d].center", l);
+		SetUniform(name, _spheres[l]->center);
+
+		sprintf(name, "spheres[%d].radius", l);
+		SetUniform(name, _spheres[l]->radius);
+	}
+}

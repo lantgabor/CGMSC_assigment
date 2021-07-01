@@ -21,6 +21,7 @@
 
 #include "Material.h"
 #include "Light.h"
+#include "Sphere.h"
 
 class CMyApp
 {
@@ -63,5 +64,6 @@ protected:
 
 	std::vector<Material*> materials;
 	std::vector<Light*> lights;
+	std::vector<Sphere*> spheres;
 };
 

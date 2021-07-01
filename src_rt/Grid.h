@@ -7,8 +7,6 @@
 
 #include "Mesh_OGL3.h"
 
-
-
 class Grid
 {
 public:
@@ -21,11 +19,11 @@ public:
         glm::vec3 N;
     };
 
-    struct Box {
+    struct AABB {
         glm::vec3 c;
         glm::vec3 pos;
 
-        std::vector <Grid::Triangle> traingles;
+        std::vector <Grid::Triangle> triangles;
     };
 
 	Grid(void);
@@ -34,5 +32,5 @@ public:
 
 private:
     Mesh* mesh;
-    std::vector<Box> grid;
+    std::vector<AABB> grid;
 };
