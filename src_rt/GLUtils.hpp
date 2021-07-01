@@ -143,8 +143,8 @@ GLuint TextureFromFile(const char* filename)
 
     GLuint tex;
     glGenTextures(1, &tex);
-  
     glBindTexture(GL_TEXTURE_2D, tex);
+  
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, loaded_img->w, loaded_img->h, img_mode, GL_UNSIGNED_BYTE, loaded_img->pixels);
   
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -153,4 +153,32 @@ GLuint TextureFromFile(const char* filename)
 	SDL_FreeSurface( loaded_img );
 
     return tex;
+}
+
+void TextureFromFileCube(const char* filename, GLuint role) {
+	SDL_Surface* loaded_img = IMG_Load(filename);
+
+	int img_mode = 0;
+
+	if (loaded_img == 0)
+	{
+		std::cout << "[TextureFromFile] Error loading the image: " << filename << std::endl;
+		return;
+	}
+
+	#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+		if (loaded_img->format->BytesPerPixel == 4)
+			img_mode = GL_BGRA;
+		else
+			img_mode = GL_BGR;
+	#else
+		if (loaded_img->format->BytesPerPixel == 4)
+			img_mode = GL_RGBA;
+		else
+			img_mode = GL_RGB;
+	#endif
+
+	glTexImage2D(role, 0, GL_RGBA, loaded_img->w, loaded_img->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, loaded_img->pixels);
+
+	SDL_FreeSurface(loaded_img);
 }

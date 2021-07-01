@@ -47,6 +47,8 @@ protected:
 	// OpenGL-es dolgok
 	GLuint m_textureID; // text�ra er�forr�s azonos�t�
 
+	GLuint m_skyboxID;
+
 	gCamera			m_camera;
 
 	gShaderProgram	m_sphere_program;

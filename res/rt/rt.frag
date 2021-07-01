@@ -39,6 +39,7 @@ struct Hit{
     float t;
     int mat;
 };
+uniform samplerCube cubemap; // cubemap texture sampler
 
 uniform mat4 viewProj;
 uniform mat4 viewIprojI;
@@ -50,6 +51,7 @@ uniform vec3 lightPos;
 uniform float shininess;
 uniform vec3 La;
 uniform vec3 translate;
+
 
 uniform Light lights[MAX_LIGHTS];
 uniform Material materials[4];
@@ -172,7 +174,7 @@ Hit firstIntersect(Ray ray){
     hit = sphereInt(sp, ray);
 
     if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
-            hit.mat = 0;
+            hit.mat = 1;
             besthit=hit;
     }
     if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
@@ -196,7 +198,7 @@ Hit firstIntersect(Ray ray){
         Hit hit=rayTriangleIntersect(ray, A, B, C, N);
 
         if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
-            hit.mat = 2;
+            hit.mat = 0;
             besthit=hit;
         }
         // if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
@@ -206,6 +208,7 @@ Hit firstIntersect(Ray ray){
     return besthit;
 }
 
+// Schlick approx
 vec3 Fresnel(vec3 F0, float cosTheta) { 
 		return F0 + (vec3(1, 1, 1) - F0) * pow(cosTheta, 5);
 }
@@ -249,7 +252,7 @@ vec3 trace(Ray ray){
 
 				Hit hit = firstIntersect(ray);
 				if (hit.t <= 0) {
-					outRadiance += ray.weight * La; 
+					outRadiance += ray.weight * vec3(texture(cubemap, ray.dir).xyz);
 					break;
 				}
 

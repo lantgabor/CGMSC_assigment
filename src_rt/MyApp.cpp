@@ -10,7 +10,8 @@
 
 CMyApp::CMyApp(void)
 {
-	m_textureID = 0;
+	// m_textureID = 0;
+	m_skyboxID = 0;
 	m_mesh = 0;
 }
 
@@ -60,7 +61,27 @@ bool CMyApp::Init()
 	lights.push_back(new Light(lightPos, glm::vec3(5,5,5)));
 
 	// Loading texture
-	// m_textureID = TextureFromFile("../res/texture.png");
+	//m_textureID = TextureFromFile("../res/texture.png");
+
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+	glGenTextures(1, &m_skyboxID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyboxID);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	TextureFromFileCube("../res/rt/skybox/xpos.png", GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+	TextureFromFileCube("../res/rt/skybox/xneg.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_X);
+	TextureFromFileCube("../res/rt/skybox/ypos.png", GL_TEXTURE_CUBE_MAP_POSITIVE_Y);
+	TextureFromFileCube("../res/rt/skybox/yneg.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_Y);
+	TextureFromFileCube("../res/rt/skybox/zpos.png", GL_TEXTURE_CUBE_MAP_POSITIVE_Z);
+	TextureFromFileCube("../res/rt/skybox/zneg.png", GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
 	// Loading mesh
 	m_mesh = ObjParser::parse("../res/teapot.obj", new Mesh());
@@ -74,7 +95,8 @@ bool CMyApp::Init()
 
 void CMyApp::Clean()
 {
-	glDeleteTextures(1, &m_textureID);
+	// glDeleteTextures(1, &m_textureID);
+	glDeleteTextures(1, &m_skyboxID);
 
 	m_sphere_program.Clean();
 
@@ -102,6 +124,8 @@ void CMyApp::Render()
 
 			glm::mat4 sphere_world = glm::translate(  glm::vec3(0,0,0) );
 
+			m_sphere_program.SetCubeTexture("cubemap", 0 , m_skyboxID);
+			
 			m_sphere_program.SetUniform("viewProj",		m_camera.GetViewProj() );
 			m_sphere_program.SetUniform("viewIprojI",	glm::inverse( m_camera.GetProj() * m_camera.GetViewMatrix() ) );
 			m_sphere_program.SetUniform("view",			m_camera.GetViewMatrix() );
@@ -109,6 +133,7 @@ void CMyApp::Render()
 			m_sphere_program.SetUniform("model",		sphere_world );
 			m_sphere_program.SetUniform("La",		La );
 			m_sphere_program.SetUniform("shininess", 	shininess );
+
 
 			m_sphere_program.SetUniformLights(lights);
 			m_sphere_program.SetUniformMaterials(materials);
