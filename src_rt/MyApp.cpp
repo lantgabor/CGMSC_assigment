@@ -49,6 +49,16 @@ bool CMyApp::Init()
 	// Camera
 	m_camera.SetProj(45.0f, 640.0f/480.0f, 0.01f, 1000.0f);
 
+
+	//Materials http://www.it.hiof.no/~borres/j3d/explain/light/p-materials.html
+	materials.push_back(new Rough(glm::vec3(0.1, 0.2, 0.3), glm::vec3(10, 10, 10), 155 ));
+	materials.push_back(new Glass(glm::vec3(0.1, 0.13, 0.15), 1.2 ));
+	materials.push_back(new Metal(glm::vec3(0.797357f, 0.723991f, 0.208006f)));
+	materials.push_back(new Rough(glm::vec3(0.1, 0.1, 0.1), glm::vec3(2, 2, 2), 124 ));
+	
+	//Lights
+	lights.push_back(new Light(lightPos, glm::vec3(5,5,5)));
+
 	// Loading texture
 	// m_textureID = TextureFromFile("../res/texture.png");
 
@@ -90,18 +100,19 @@ void CMyApp::Render()
 
 		m_quad_vb.On();
 
-			glm::mat4 sphere_world = glm::translate( world );
+			glm::mat4 sphere_world = glm::translate(  glm::vec3(0,0,0) );
 
 			m_sphere_program.SetUniform("viewProj",		m_camera.GetViewProj() );
 			m_sphere_program.SetUniform("viewIprojI",	glm::inverse( m_camera.GetProj() * m_camera.GetViewMatrix() ) );
 			m_sphere_program.SetUniform("view",			m_camera.GetViewMatrix() );
 			m_sphere_program.SetUniform("modelI",		glm::inverse(sphere_world) );
 			m_sphere_program.SetUniform("model",		sphere_world );
-			m_sphere_program.SetUniform("lights[0].position",		lightPos );
-			m_sphere_program.SetUniform("lights[0].Le",		Le );
-			m_sphere_program.SetUniform("lights[0].La",		La );
+			m_sphere_program.SetUniform("La",		La );
 			m_sphere_program.SetUniform("shininess", 	shininess );
-			m_sphere_program.SetUniform("translate", 	translate );
+
+			m_sphere_program.SetUniformLights(lights);
+			m_sphere_program.SetUniformMaterials(materials);
+			m_sphere_program.SetUniform("lights[0].position",		lightPos );
 
 			m_quad_vb.Draw(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -113,9 +124,7 @@ void CMyApp::Render()
 	if(ImGui::Begin("Tools")) // Note that ImGui returns false when window is collapsed so we can early-out
 	{
 		ImGui::SliderFloat3("light_pos", &lightPos.x, -1.f, 1.f);
-		ImGui::SliderFloat3("Le", &Le.x, 0.f, 1.f);
-		ImGui::SliderFloat("shininess", &shininess, 0.1f, 55.f);
-		// ImGui::SliderFloat3("translate", &translate.x, -10.f, 10.f);
+		ImGui::SliderFloat("shininess", &shininess, 0.1f, 155.f);
 	}
 	ImGui::End(); // In either case, ImGui::End() needs to be called for ImGui::Begin().
 		// Note that other commands may work differently and may not need an End* if Begin* returned false.

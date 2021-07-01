@@ -28,7 +28,7 @@ bool gShaderProgram::AttachShader( GLenum _shaderType,  const char* _filename )
 		{
 			if ( m_verbose )
 			{
-				std::cout << "Hiba a shader program létrehozásakor" << std::endl;
+				std::cout << "Hiba a shader program lï¿½trehozï¿½sakor" << std::endl;
 			}
 			return false;
 		}
@@ -65,10 +65,10 @@ bool gShaderProgram::LinkProgram()
 	return true;
 }
 
-// töröljük a shader programot, elõtte detach-oljuk a shadereket
+// tï¿½rï¿½ljï¿½k a shader programot, elï¿½tte detach-oljuk a shadereket
 void gShaderProgram::Clean()
 {
-	// töröljük a már linkelt linkelt shadereket
+	// tï¿½rï¿½ljï¿½k a mï¿½r linkelt linkelt shadereket
 	for (	std::list<GLuint>::iterator _it = m_list_shaders_attached.begin();
 			_it != m_list_shaders_attached.end();
 			++_it )
@@ -95,7 +95,7 @@ GLuint gShaderProgram::loadShader(GLenum _shaderType, const char* _fileName)
 	if ( loadedShader == 0 )
 	{
 		if (m_verbose)
-			fprintf(stderr, "Hiba a %s shader fájl inicializálásakor (glCreateShader)!", _fileName);
+			fprintf(stderr, "Hiba a %s shader fï¿½jl inicializï¿½lï¿½sakor (glCreateShader)!", _fileName);
 		return 0;
 	}
 	
@@ -108,7 +108,7 @@ GLuint gShaderProgram::loadShader(GLenum _shaderType, const char* _fileName)
 	if ( !shaderStream.is_open() )
 	{
 		if (m_verbose)
-			fprintf(stderr, "Hiba a %s shader fájl betöltésekor!", _fileName);
+			fprintf(stderr, "Hiba a %s shader fï¿½jl betï¿½ltï¿½sekor!", _fileName);
 		return 0;
 	}
 
@@ -253,4 +253,41 @@ void gShaderProgram::SetCubeTexture(const char* _uniform, int _sampler, GLuint _
 	glActiveTexture(GL_TEXTURE0 + _sampler);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, _textureID);
 	SetUniform(_uniform, _sampler);
+}
+
+void gShaderProgram::SetUniformMaterials(const std::vector<Material*>& _materials) {
+	char name[256];
+	for (int i=0; i<_materials.size(); ++i) {
+		sprintf(name, "materials[%d].ka", i);
+		SetUniform( name, _materials[i]->ka);
+
+		sprintf(name, "materials[%d].kd", i); 
+		SetUniform( name, _materials[i]->kd);
+
+		sprintf(name, "materials[%d].ks", i);
+		SetUniform( name, _materials[i]->ks);
+
+		sprintf(name, "materials[%d].shininess", i);
+		SetUniform( name, _materials[i]->shininess);
+
+		sprintf(name, "materials[%d].F0", i);
+		SetUniform( name, _materials[i]->F0);
+
+		sprintf(name, "materials[%d].n", i);
+		SetUniform( name , _materials[i]->n); 
+
+		sprintf(name, "materials[%d].type", i);
+		SetUniform( name, _materials[i]->type);
+	}
+}
+
+void gShaderProgram::SetUniformLights(const std::vector<Light*>& _lights){
+	char name[256];
+	for (int l = 0; l < _lights.size(); l++) {
+		sprintf(name, "lights[%d].Le", l);
+		SetUniform(name, _lights[l]->Le);
+
+		sprintf(name, "lights[%d].position", l);
+		SetUniform(name, _lights[l]->position);
+	}
 }

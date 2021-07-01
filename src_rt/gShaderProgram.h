@@ -6,8 +6,12 @@
 #include <map>
 #include <string>
 #include <list>
+#include <vector>
 
 #include <glm/glm.hpp>
+
+#include "Material.h"
+#include "Light.h"
 
 class gShaderProgram
 {
@@ -38,6 +42,8 @@ public:
 	void SetUniform(const char* _uniform, float _a, float _b, float _c, float _d);
 	void SetTexture(const char* _uniform, int _sampler, GLuint _textureID);
 	void SetCubeTexture(const char* _uniform, int _sampler, GLuint _textureID);
+	void SetUniformMaterials(const std::vector<Material*>& _materials);
+	void SetUniformLights(const std::vector<Light*>& _lights); 
 protected:
 	GLuint	getLocation(const char* _uniform);
 	GLuint	loadShader(GLenum _shaderType, const char* _fileName);

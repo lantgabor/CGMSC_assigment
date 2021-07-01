@@ -19,6 +19,9 @@
 #include "gCamera.h"
 #include "Grid.h"
 
+#include "Material.h"
+#include "Light.h"
+
 class CMyApp
 {
 public:
@@ -52,12 +55,11 @@ protected:
 	Mesh			*m_mesh;
 	Grid			grid = Grid();
 
-	glm::vec3 lightPos = glm::vec3(1,1,1);
-	glm::vec3 Le = glm::vec3(0.43,0.61,0.31);
-	glm::vec3 La = glm::vec3(0.45,0.43,0.64);
+	glm::vec3 lightPos = glm::vec3(1,1,-1);
+	glm::vec3 La = glm::vec3(0.5,0.43,0.41);
 	float shininess = 15;
 
-	glm::vec3 world = glm::vec3(0,0,0);
-	glm::vec3 translate = glm::vec3(0,0,0);
+	std::vector<Material*> materials;
+	std::vector<Light*> lights;
 };
 
