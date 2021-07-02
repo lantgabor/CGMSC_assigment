@@ -71,6 +71,7 @@ bool CMyApp::Init()
 
 	//Spheres
 	spheres.push_back(new Sphere(glm::vec3(-4,2,-3), 2));
+	spheres.push_back(new Sphere(glm::vec3(4,2,3), 2));
 	float r = 0;
 	r = rand_FloatRange(0.5,2.2);
 	spheres.push_back(new Sphere(glm::vec3(rand_FloatRange(-25,25) + 2, r, rand_FloatRange(-25,25) + 2), r));

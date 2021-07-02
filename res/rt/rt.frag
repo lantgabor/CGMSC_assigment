@@ -46,7 +46,7 @@ struct Sphere {
     float radius;
 };
 
-uniform Sphere spheres[13];
+uniform Sphere spheres[14];
 uniform Light lights[MAX_LIGHTS];
 uniform Material materials[MAX_MATERIALS];
 
@@ -160,10 +160,6 @@ Hit sphereInt(Sphere object, Ray ray) {
 }
 
 Hit firstIntersect(Ray ray){
-    Sphere sp;
-    sp.radius = 2;
-    sp.center = vec3(4,2,3);
-
     Hit besthit;
     besthit.t=-1;
    
@@ -171,14 +167,6 @@ Hit firstIntersect(Ray ray){
 
     if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
             hit.mat = 3;
-            besthit=hit;
-    }
-    if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
-
-    hit = sphereInt(sp, ray);
-
-    if (hit.t > 0 && (besthit.t < 0 || hit.t < besthit.t)){
-            hit.mat = 1;
             besthit=hit;
     }
     if (dot(ray.dir, besthit.normal) > 0) besthit.normal = besthit.normal * (-1);
@@ -245,7 +233,7 @@ vec3 trace(Ray ray){
 				if (materials[hit.mat].type == 0) {
 					outRadiance += ray.weight * materials[hit.mat].ka * La;
 
-					for(int l=0; l < MAX_LIGHTS; l++) {
+					for(int l=0; l < MAX_LIGHTS; l++) { // for each point light
 						float cosTheta = dot(hit.normal, lights[l].position);
 
 						Ray shadowRay;
