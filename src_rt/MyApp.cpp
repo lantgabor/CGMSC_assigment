@@ -33,7 +33,7 @@ bool CMyApp::Init()
 
 	// screen quad
 	m_quad_vb.AddAttribute(0, 3);
-	
+
 	m_quad_vb.AddData( 0, -1, -1, 0 );
 	m_quad_vb.AddData( 0,  1, -1, 0 );
 	m_quad_vb.AddData( 0, -1,  1, 0 );
@@ -144,14 +144,19 @@ void CMyApp::Render()
 
 			glm::mat4 sphere_world = glm::translate(  glm::vec3(0,0,0) );
 
+            auto _Proj =  m_camera.GetViewProj();
+            auto _IProjI = glm::inverse( m_camera.GetProj() * m_camera.GetViewMatrix() );
+            auto _view = m_camera.GetViewMatrix();
+            auto _modelI = glm::inverse(sphere_world);
+
 			m_sphere_program.SetCubeTexture("cubemap", 0 , m_skyboxID);
-			
-			m_sphere_program.SetUniform("viewProj",		m_camera.GetViewProj() );
-			m_sphere_program.SetUniform("viewIprojI",	glm::inverse( m_camera.GetProj() * m_camera.GetViewMatrix() ) );
-			m_sphere_program.SetUniform("view",			m_camera.GetViewMatrix() );
-			m_sphere_program.SetUniform("modelI",		glm::inverse(sphere_world) );
+
+			m_sphere_program.SetUniform("viewProj",		_Proj );
+			m_sphere_program.SetUniform("viewIprojI",	_IProjI );
+			m_sphere_program.SetUniform("view",			_view );
+			m_sphere_program.SetUniform("modelI",		_modelI );
 			m_sphere_program.SetUniform("model",		sphere_world );
-			m_sphere_program.SetUniform("La",		La );
+			m_sphere_program.SetUniform("La",    		La );
 
 
 			m_sphere_program.SetUniformLights(lights);

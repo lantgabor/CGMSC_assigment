@@ -7,7 +7,7 @@ CFLAGS = -std=c99 -pedantic -O1
 
 TARGET_EXEC ?= build
 BUILD_DIR ?= ./build/
-SRC_DIRS ?= ./src
+SRC_DIRS ?= ./src_rt
 
 SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
@@ -21,7 +21,7 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CPPFLAGS = $(INC_FLAGS) -MMD -MP -ggdb
 CXXFLAGS = -std=c++17 -g
-LDFLAGS =  -lGLEW -lSDL2 -lSDL2_image -lGL -lfreetype
+LDFLAGS =  -lGLEW -lGLU -lSDL2 -lSDL2_image -lGL -lfreetype
 
 # main target(C)
 #$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)

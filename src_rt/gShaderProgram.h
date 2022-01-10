@@ -56,4 +56,3 @@ protected:
 
 	bool	m_verbose;
 };
-
